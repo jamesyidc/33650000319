@@ -99,3 +99,16 @@
 {"timestamp": 1773857126651, "beijing_time": "2026-03-19 02:05:17", "velocity_5min": 6.29, "current_total_change": 27.09, "total_change_5min_ago": 20.8}
 {"timestamp": 1773859948635, "beijing_time": "2026-03-19 02:52:04", "velocity_5min": 0.0, "current_total_change": 11.16, "total_change_5min_ago": 11.16}
 {"timestamp": 1773860020584, "beijing_time": "2026-03-19 02:53:28", "velocity_5min": -4.6, "current_total_change": 6.56, "total_change_5min_ago": 11.16}
+{"timestamp": 1773860092446, "beijing_time": "2026-03-19 02:54:40", "velocity_5min": -10.63, "current_total_change": 0.53, "total_change_5min_ago": 11.16}
+{"timestamp": 1773860164292, "beijing_time": "2026-03-19 02:55:52", "velocity_5min": -11.9, "current_total_change": -0.74, "total_change_5min_ago": 11.16}
+{"timestamp": 1773860236072, "beijing_time": "2026-03-19 02:57:04", "velocity_5min": -14.38, "current_total_change": -3.22, "total_change_5min_ago": 11.16}
+{"timestamp": 1773860319934, "beijing_time": "2026-03-19 02:58:16", "velocity_5min": -12.45, "current_total_change": -5.89, "total_change_5min_ago": 6.56}
+{"timestamp": 1773860391680, "beijing_time": "2026-03-19 02:59:39", "velocity_5min": -2.45, "current_total_change": -1.92, "total_change_5min_ago": 0.53}
+{"timestamp": 1773860463583, "beijing_time": "2026-03-19 03:00:51", "velocity_5min": 5.33, "current_total_change": 4.59, "total_change_5min_ago": -0.74}
+{"timestamp": 1773860535333, "beijing_time": "2026-03-19 03:02:03", "velocity_5min": 7.0, "current_total_change": 3.78, "total_change_5min_ago": -3.22}
+{"timestamp": 1773860606990, "beijing_time": "2026-03-19 03:03:15", "velocity_5min": 15.84, "current_total_change": 9.95, "total_change_5min_ago": -5.89}
+{"timestamp": 1773860690601, "beijing_time": "2026-03-19 03:04:26", "velocity_5min": 13.52, "current_total_change": 11.6, "total_change_5min_ago": -1.92}
+{"timestamp": 1773860762363, "beijing_time": "2026-03-19 03:05:50", "velocity_5min": 8.86, "current_total_change": 13.45, "total_change_5min_ago": 4.59}
+{"timestamp": 1773860834210, "beijing_time": "2026-03-19 03:07:02", "velocity_5min": 7.59, "current_total_change": 11.37, "total_change_5min_ago": 3.78}
+{"timestamp": 1773860906021, "beijing_time": "2026-03-19 03:08:14", "velocity_5min": -0.14, "current_total_change": 9.81, "total_change_5min_ago": 9.95}
+{"timestamp": 1773860977771, "beijing_time": "2026-03-19 03:09:26", "velocity_5min": 0.9, "current_total_change": 12.5, "total_change_5min_ago": 11.6}
