@@ -2204,6 +2204,54 @@ def abc_position_trigger_history():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/abc-position/api/signals', methods=['GET', 'POST'])
+def abc_position_signals():
+    """获取或保存信号标记（4小时最高点和平仓信号）"""
+    # 使用北京时间作为默认日期
+    beijing_tz = pytz.timezone('Asia/Shanghai')
+    beijing_now = datetime.now(beijing_tz)
+    date = request.args.get('date', beijing_now.strftime('%Y%m%d'))
+    account = request.args.get('account', 'all')  # 可以按账户筛选
+    
+    signal_file = Path(f'/home/user/webapp/data/abc_position_signals/signals_{date}.jsonl')
+    
+    if request.method == 'GET':
+        try:
+            if not signal_file.exists():
+                return jsonify({'success': True, 'data': [], 'date': date})
+            
+            signals = []
+            with open(signal_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        signal = json.loads(line)
+                        # 如果指定了账户，只返回该账户的信号
+                        if account == 'all' or signal.get('account') == account:
+                            signals.append(signal)
+            
+            return jsonify({'success': True, 'data': signals, 'date': date})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
+    
+    elif request.method == 'POST':
+        try:
+            signals = request.json.get('signals', [])
+            
+            # 确保目录存在
+            signal_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # 追加写入JSONL格式
+            with open(signal_file, 'a', encoding='utf-8') as f:
+                for signal in signals:
+                    # 添加时间戳
+                    if 'created_at' not in signal:
+                        signal['created_at'] = beijing_now.isoformat()
+                    f.write(json.dumps(signal, ensure_ascii=False) + '\n')
+            
+            return jsonify({'success': True, 'message': f'已保存{len(signals)}个信号', 'date': date})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/abc-position/api/trading-permission', methods=['GET', 'POST'])
 def abc_position_trading_permission():
     """获取或设置交易权限"""

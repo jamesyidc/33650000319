@@ -3095,10 +3095,180 @@ def get_position_color(account_id, total_cost):
         }
         
         // 更新图表
+        // 🎯 计算4小时最高点和平仓信号
+        function calculateSignals(historyData, account) {
+            const signals = {
+                highPoints: [],  // 4小时最高点
+                closeSignals: [] // 平仓信号
+            };
+            
+            if (!historyData || historyData.length === 0) return signals;
+            
+            const FOUR_HOURS = 4 * 60;  // 4小时 = 240分钟
+            const TWO_HALF_HOURS = 2.5 * 60;  // 2.5小时 = 150分钟
+            
+            // 获取账户数据
+            const accountData = historyData.map((d, idx) => ({
+                idx: idx,
+                timestamp: d.timestamp,
+                pnl: d.accounts[account]?.pnl_pct || 0,
+                cost: d.accounts[account]?.total_cost || 0,
+                posCount: d.accounts[account]?.position_count || 0
+            }));
+            
+            // 遍历每个数据点，寻找4小时窗口内的最高点
+            for (let i = 0; i < accountData.length; i++) {
+                const currentPoint = accountData[i];
+                
+                // 定义4小时窗口：从 (i-240) 到 i
+                const windowStart = Math.max(0, i - FOUR_HOURS);
+                const windowData = accountData.slice(windowStart, i + 1);
+                
+                // 找出窗口内的最高点
+                let maxPnl = -Infinity;
+                let maxIdx = -1;
+                
+                for (let j = 0; j < windowData.length; j++) {
+                    if (windowData[j].pnl > maxPnl) {
+                        maxPnl = windowData[j].pnl;
+                        maxIdx = windowData[j].idx;
+                    }
+                }
+                
+                // 如果当前点是窗口内的最高点，记录
+                if (maxIdx === i && maxPnl > 0) {  // 只标记盈利的最高点
+                    // 检查是否已经标记过（避免重复）
+                    const alreadyMarked = signals.highPoints.some(p => p.idx === i);
+                    if (!alreadyMarked) {
+                        signals.highPoints.push({
+                            idx: i,
+                            timestamp: currentPoint.timestamp,
+                            pnl: currentPoint.pnl,
+                            type: 'high_point'
+                        });
+                    }
+                }
+            }
+            
+            // 为每个最高点检查是否触发平仓信号
+            for (const highPoint of signals.highPoints) {
+                const highIdx = highPoint.idx;
+                const highPnl = highPoint.pnl;
+                
+                // 从最高点往后看2.5小时
+                const checkEnd = Math.min(accountData.length, highIdx + TWO_HALF_HOURS + 1);
+                let foundHigher = false;
+                
+                // 检查后续2.5小时内是否有更高的点
+                for (let j = highIdx + 1; j < checkEnd; j++) {
+                    if (accountData[j].pnl > highPnl) {
+                        foundHigher = true;
+                        break;
+                    }
+                }
+                
+                // 如果2.5小时内没有创新高，标记平仓信号
+                if (!foundHigher && checkEnd > highIdx + 1) {
+                    const closeIdx = Math.min(highIdx + TWO_HALF_HOURS, accountData.length - 1);
+                    const closePoint = accountData[closeIdx];
+                    
+                    signals.closeSignals.push({
+                        idx: closeIdx,
+                        timestamp: closePoint.timestamp,
+                        pnl: closePoint.pnl,
+                        highPointIdx: highIdx,
+                        highPointPnl: highPnl,
+                        type: 'close_signal'
+                    });
+                }
+            }
+            
+            return signals;
+        }
+        
+        // 💾 保存信号到后端
+        async function saveSignals(date, account, signals) {
+            try {
+                const signalsToSave = [];
+                
+                // 添加最高点信号
+                for (const hp of signals.highPoints) {
+                    signalsToSave.push({
+                        account: account,
+                        type: 'high_point',
+                        timestamp: hp.timestamp,
+                        pnl: hp.pnl,
+                        idx: hp.idx
+                    });
+                }
+                
+                // 添加平仓信号
+                for (const cs of signals.closeSignals) {
+                    signalsToSave.push({
+                        account: account,
+                        type: 'close_signal',
+                        timestamp: cs.timestamp,
+                        pnl: cs.pnl,
+                        idx: cs.idx,
+                        high_point_idx: cs.highPointIdx,
+                        high_point_pnl: cs.highPointPnl
+                    });
+                }
+                
+                if (signalsToSave.length === 0) return;
+                
+                const response = await fetch(`/abc-position/api/signals?date=${date}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ signals: signalsToSave })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log(`✅ 已保存账户${account}的${signalsToSave.length}个信号`);
+                } else {
+                    console.error('保存信号失败:', data.error);
+                }
+            } catch (error) {
+                console.error('保存信号异常:', error);
+            }
+        }
+        
+        // 📥 从后端加载信号
+        async function loadSignals(date, account = 'all') {
+            try {
+                const response = await fetch(`/abc-position/api/signals?date=${date}&account=${account}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log(`📥 加载了${data.data.length}个信号`);
+                    return data.data;
+                } else {
+                    console.error('加载信号失败:', data.error);
+                    return [];
+                }
+            } catch (error) {
+                console.error('加载信号异常:', error);
+                return [];
+            }
+        }
+        
         function updateChart() {
             if (historyData.length === 0) {
                 chart.clear();
                 return;
+            }
+            
+            // 🎯 计算所有账户的信号（4小时最高点和平仓信号）
+            const allAccountSignals = {};
+            const allSeries = ['A', 'B', 'C', 'D'];
+            
+            for (const accId of allSeries) {
+                const signals = calculateSignals(historyData, accId);
+                allAccountSignals[accId] = signals;
+                console.log(`账户${accId}信号:`, signals.highPoints.length + '个最高点,', signals.closeSignals.length + '个平仓信号');
             }
             
             // 提取时间（显示 HH:mm 格式）
@@ -3298,34 +3468,91 @@ def get_position_color(account_id, total_cost):
                                     }]
                                 ]
                             } : undefined,
-                            // 在第一个段添加加仓点标记（所有账户）
-                            markPoint: (segIdx === 0 && positionIncreasePoints.length > 0) ? {
-                                symbol: 'circle',
-                                symbolSize: 12,
-                                itemStyle: {
-                                    color: '#8b5cf6',  // 紫色圆点
-                                    borderColor: '#fff',
-                                    borderWidth: 2
-                                },
-                                label: {
-                                    show: true,
-                                    position: 'top',
-                                    formatter: function(params) {
-                                        return params.value;
-                                    },
-                                    fontSize: 10,
-                                    color: '#8b5cf6',
-                                    fontWeight: 'bold',
-                                    distance: 8
-                                },
-                                emphasis: {
-                                    scale: 1.5,
-                                    label: {
-                                        show: true,
-                                        fontSize: 12
+                            // 在第一个段添加标记点（加仓点+信号点）
+                            markPoint: (segIdx === 0) ? {
+                                data: (() => {
+                                    const markPoints = [];
+                                    
+                                    // 添加加仓点（紫色圆圈）
+                                    if (positionIncreasePoints.length > 0) {
+                                        positionIncreasePoints.forEach(point => {
+                                            markPoints.push({
+                                                coord: point.coord,
+                                                value: point.value,
+                                                symbol: 'circle',
+                                                symbolSize: 12,
+                                                itemStyle: {
+                                                    color: '#8b5cf6',
+                                                    borderColor: '#fff',
+                                                    borderWidth: 2
+                                                },
+                                                label: {
+                                                    show: true,
+                                                    position: 'top',
+                                                    fontSize: 10,
+                                                    color: '#8b5cf6',
+                                                    fontWeight: 'bold',
+                                                    distance: 8
+                                                }
+                                            });
+                                        });
                                     }
-                                },
-                                data: positionIncreasePoints
+                                    
+                                    // 添加4小时最高点标记（金色星星）
+                                    const signals = allAccountSignals[accId];
+                                    if (signals && signals.highPoints.length > 0) {
+                                        signals.highPoints.forEach(hp => {
+                                            markPoints.push({
+                                                coord: [hp.idx, hp.pnl],
+                                                value: '⭐',
+                                                symbol: 'diamond',
+                                                symbolSize: 16,
+                                                itemStyle: {
+                                                    color: '#fbbf24',
+                                                    borderColor: '#fff',
+                                                    borderWidth: 2
+                                                },
+                                                label: {
+                                                    show: true,
+                                                    position: 'top',
+                                                    fontSize: 14,
+                                                    color: '#fbbf24',
+                                                    fontWeight: 'bold',
+                                                    distance: 10,
+                                                    formatter: '⭐4H高'
+                                                }
+                                            });
+                                        });
+                                    }
+                                    
+                                    // 添加平仓信号标记（红色旗帜）
+                                    if (signals && signals.closeSignals.length > 0) {
+                                        signals.closeSignals.forEach(cs => {
+                                            markPoints.push({
+                                                coord: [cs.idx, cs.pnl],
+                                                value: '🚩',
+                                                symbol: 'pin',
+                                                symbolSize: 18,
+                                                itemStyle: {
+                                                    color: '#ef4444',
+                                                    borderColor: '#fff',
+                                                    borderWidth: 2
+                                                },
+                                                label: {
+                                                    show: true,
+                                                    position: 'top',
+                                                    fontSize: 14,
+                                                    color: '#ef4444',
+                                                    fontWeight: 'bold',
+                                                    distance: 12,
+                                                    formatter: '🚩平仓'
+                                                }
+                                            });
+                                        });
+                                    }
+                                    
+                                    return markPoints;
+                                })()
                             } : undefined
                         });
                     });
@@ -4261,6 +4488,15 @@ def get_position_color(account_id, total_cost):
                         const lastTime = new Date(historyData[historyData.length - 1].timestamp);
                         const timeRange = `📅 ${dateInput.value} | ⏰ ${formatTime(firstTime)} - ${formatTime(lastTime)} | 📊 共 ${historyData.length} 个数据点`;
                         document.getElementById('chartTimeRange').textContent = timeRange;
+                        
+                        // 🎯 计算并保存所有账户的信号
+                        const allAccounts = ['A', 'B', 'C', 'D'];
+                        for (const accId of allAccounts) {
+                            const signals = calculateSignals(historyData, accId);
+                            if (signals.highPoints.length > 0 || signals.closeSignals.length > 0) {
+                                await saveSignals(selectedDate, accId, signals);
+                            }
+                        }
                     }
                     
                     updateChart();
