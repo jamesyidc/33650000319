@@ -3116,38 +3116,37 @@ def get_position_color(account_id, total_cost):
                 posCount: d.accounts[account]?.position_count || 0
             }));
             
-            // 遍历每个数据点，寻找4小时窗口内的最高点
-            for (let i = 0; i < accountData.length; i++) {
-                const currentPoint = accountData[i];
+            // 🎯 新算法：每4小时只标记一个最高点
+            // 从数据开始，每隔4小时划分一个窗口，找出该窗口内的最高点
+            let windowStartIdx = 0;
+            
+            while (windowStartIdx < accountData.length) {
+                const windowEndIdx = Math.min(windowStartIdx + FOUR_HOURS, accountData.length);
+                const windowData = accountData.slice(windowStartIdx, windowEndIdx);
                 
-                // 定义4小时窗口：从 (i-240) 到 i
-                const windowStart = Math.max(0, i - FOUR_HOURS);
-                const windowData = accountData.slice(windowStart, i + 1);
-                
-                // 找出窗口内的最高点
+                // 找出这个窗口内的最高点
                 let maxPnl = -Infinity;
-                let maxIdx = -1;
+                let maxPoint = null;
                 
-                for (let j = 0; j < windowData.length; j++) {
-                    if (windowData[j].pnl > maxPnl) {
-                        maxPnl = windowData[j].pnl;
-                        maxIdx = windowData[j].idx;
+                for (const point of windowData) {
+                    if (point.pnl > maxPnl && point.pnl > 0) {  // 只考虑盈利的点
+                        maxPnl = point.pnl;
+                        maxPoint = point;
                     }
                 }
                 
-                // 如果当前点是窗口内的最高点，记录
-                if (maxIdx === i && maxPnl > 0) {  // 只标记盈利的最高点
-                    // 检查是否已经标记过（避免重复）
-                    const alreadyMarked = signals.highPoints.some(p => p.idx === i);
-                    if (!alreadyMarked) {
-                        signals.highPoints.push({
-                            idx: i,
-                            timestamp: currentPoint.timestamp,
-                            pnl: currentPoint.pnl,
-                            type: 'high_point'
-                        });
-                    }
+                // 如果找到最高点，记录
+                if (maxPoint) {
+                    signals.highPoints.push({
+                        idx: maxPoint.idx,
+                        timestamp: maxPoint.timestamp,
+                        pnl: maxPoint.pnl,
+                        type: 'high_point'
+                    });
                 }
+                
+                // 移动到下一个4小时窗口
+                windowStartIdx += FOUR_HOURS;
             }
             
             // 为每个最高点检查是否触发平仓信号
