@@ -519,18 +519,29 @@ class ABCPositionTracker:
         # 获取OKX持仓数据（新格式：直接返回账户数据）
         okx_positions = self.fetch_okx_positions()
         
+        # 账户标签到 OKX API 账户 ID 的映射
+        label_to_api_id = {
+            'A': 'main',
+            'B': 'poit_main',
+            'C': 'fangfang12',
+            'D': 'dadanini'
+        }
+        
         # 更新各账户数据
         for acc_label in ['A', 'B', 'C', 'D']:
-            acc_data = okx_positions.get(acc_label, {})
+            # 获取对应的 API 账户 ID
+            api_account_id = label_to_api_id.get(acc_label)
+            acc_data = okx_positions.get(api_account_id, {})
             
-            if acc_data.get('success'):
-                # 直接使用API返回的数据
-                self.state['accounts'][acc_label]['total_cost'] = acc_data.get('total_cost', 0)
-                self.state['accounts'][acc_label]['unrealized_pnl'] = acc_data.get('unrealized_pnl', 0)
-                self.state['accounts'][acc_label]['pnl_pct'] = acc_data.get('pnl_pct', 0)
+            if acc_data and acc_data.get('position_count', 0) > 0:
+                # 使用 API 返回的真实数据
+                # total_margin 是成本，total_upl 是未实现盈亏，profit_ratio 是盈亏百分比
+                self.state['accounts'][acc_label]['total_cost'] = acc_data.get('total_margin', 0)
+                self.state['accounts'][acc_label]['unrealized_pnl'] = acc_data.get('total_upl', 0)
+                self.state['accounts'][acc_label]['pnl_pct'] = acc_data.get('profit_ratio', 0)
                 self.state['accounts'][acc_label]['position_count'] = acc_data.get('position_count', 0)
             else:
-                # API失败，使用默认值
+                # 无持仓或API失败，使用默认值
                 self.state['accounts'][acc_label]['total_cost'] = 0
                 self.state['accounts'][acc_label]['unrealized_pnl'] = 0
                 self.state['accounts'][acc_label]['pnl_pct'] = 0

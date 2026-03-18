@@ -112,3 +112,6 @@
 {"timestamp": 1773860834210, "beijing_time": "2026-03-19 03:07:02", "velocity_5min": 7.59, "current_total_change": 11.37, "total_change_5min_ago": 3.78}
 {"timestamp": 1773860906021, "beijing_time": "2026-03-19 03:08:14", "velocity_5min": -0.14, "current_total_change": 9.81, "total_change_5min_ago": 9.95}
 {"timestamp": 1773860977771, "beijing_time": "2026-03-19 03:09:26", "velocity_5min": 0.9, "current_total_change": 12.5, "total_change_5min_ago": 11.6}
+{"timestamp": 1773861061245, "beijing_time": "2026-03-19 03:10:37", "velocity_5min": -2.39, "current_total_change": 11.06, "total_change_5min_ago": 13.45}
+{"timestamp": 1773861133029, "beijing_time": "2026-03-19 03:12:01", "velocity_5min": -1.8, "current_total_change": 9.57, "total_change_5min_ago": 11.37}
+{"timestamp": 1773861204939, "beijing_time": "2026-03-19 03:13:13", "velocity_5min": 0.18, "current_total_change": 9.99, "total_change_5min_ago": 9.81}
