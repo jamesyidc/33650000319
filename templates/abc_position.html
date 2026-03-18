@@ -4477,7 +4477,16 @@ def get_position_color(account_id, total_cost):
                 const data = await response.json();
                 
                 if (data.success) {
-                    historyData = data.data;
+                    // 🔧 过滤掉所有账户都是零值的数据点
+                    const rawData = data.data;
+                    historyData = rawData.filter(record => {
+                        // 检查是否至少有一个账户有数据
+                        return Object.values(record.accounts).some(acc => 
+                            acc.pnl_pct !== 0 || acc.total_cost !== 0 || acc.position_count !== 0
+                        );
+                    });
+                    
+                    console.log(`📊 原始数据: ${rawData.length} 条, 过滤后: ${historyData.length} 条`);
                     
                     if (historyData.length === 0) {
                         // 静默处理无数据情况，不显示弹窗
