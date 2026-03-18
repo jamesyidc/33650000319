@@ -310,6 +310,21 @@
       "out_file": "/home/user/webapp/logs/okx-tpsl-monitor-out.log",
       "error_file": "/home/user/webapp/logs/okx-tpsl-monitor-error.log",
       "log_date_format": "YYYY-MM-DD HH:mm:ss"
+    },
+    {
+      "name": "sar-bias-monitor",
+      "script": "/home/user/webapp/sar_bias_monitor.py",
+      "cwd": "/home/user/webapp",
+      "interpreter": "python3",
+      "autorestart": true,
+      "max_memory_restart": "200M",
+      "cron_restart": "*/5 * * * *",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "out_file": "/home/user/webapp/logs/sar-bias-monitor-out.log",
+      "error_file": "/home/user/webapp/logs/sar-bias-monitor-error.log",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss"
     }
   ]
 }
