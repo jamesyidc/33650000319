@@ -243,6 +243,7 @@
     {
       "name": "abc-position-tracker",
       "script": "/home/user/webapp/source_code/abc_position_tracker.py",
+      "args": "--continuous --interval 60",
       "cwd": "/home/user/webapp",
       "interpreter": "python3",
       "autorestart": true,
