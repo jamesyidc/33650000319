@@ -3263,7 +3263,7 @@ def get_position_color(account_id, total_cost):
             
             // 🎯 计算所有账户的信号（4小时最高点和平仓信号）
             const allAccountSignals = {};
-            const allSeries = ['A', 'B', 'C', 'D'];
+            const allSeries = ['A', 'B', 'C', 'D'];  // 统一声明，避免重复
             
             for (const accId of allSeries) {
                 const signals = calculateSignals(historyData, accId);
@@ -3290,7 +3290,7 @@ def get_position_color(account_id, total_cost):
             console.log('账户勾选状态:', showAccounts);
             
             // 生成系列数据（只包含勾选的账户）
-            const allSeries = ['A', 'B', 'C', 'D'];
+            // allSeries 已在上面声明，这里直接使用
             const series = [];
             const allPositionIncreasePoints = {};  // 存储所有账户的加仓点 {accId: {idx: point}}
             
