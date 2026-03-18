@@ -4489,14 +4489,20 @@ def get_position_color(account_id, total_cost):
                         const timeRange = `📅 ${dateInput.value} | ⏰ ${formatTime(firstTime)} - ${formatTime(lastTime)} | 📊 共 ${historyData.length} 个数据点`;
                         document.getElementById('chartTimeRange').textContent = timeRange;
                         
-                        // 🎯 计算并保存所有账户的信号
-                        const allAccounts = ['A', 'B', 'C', 'D'];
-                        for (const accId of allAccounts) {
-                            const signals = calculateSignals(historyData, accId);
-                            if (signals.highPoints.length > 0 || signals.closeSignals.length > 0) {
-                                await saveSignals(selectedDate, accId, signals);
+                        // 🎯 异步计算并保存信号（不阻塞图表显示）
+                        setTimeout(async () => {
+                            const allAccounts = ['A', 'B', 'C', 'D'];
+                            for (const accId of allAccounts) {
+                                try {
+                                    const signals = calculateSignals(historyData, accId);
+                                    if (signals.highPoints.length > 0 || signals.closeSignals.length > 0) {
+                                        await saveSignals(selectedDate, accId, signals);
+                                    }
+                                } catch (err) {
+                                    console.error(`计算账户${accId}信号失败:`, err);
+                                }
                             }
-                        }
+                        }, 100);  // 延迟100ms，先显示图表
                     }
                     
                     updateChart();
