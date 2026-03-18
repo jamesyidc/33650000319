@@ -3154,8 +3154,16 @@ def get_position_color(account_id, total_cost):
                 const highIdx = highPoint.idx;
                 const highPnl = highPoint.pnl;
                 
+                // 🎯 关键修复：必须要有完整的2.5小时后续数据才能判断平仓信号
+                const requiredDataPoints = highIdx + TWO_HALF_HOURS;
+                
+                // 如果数据不够150分钟，跳过这个最高点（无法判断是否平仓）
+                if (requiredDataPoints >= accountData.length) {
+                    continue;  // 数据不足，不标记平仓信号
+                }
+                
                 // 从最高点往后看2.5小时
-                const checkEnd = Math.min(accountData.length, highIdx + TWO_HALF_HOURS + 1);
+                const checkEnd = highIdx + TWO_HALF_HOURS + 1;
                 let foundHigher = false;
                 
                 // 检查后续2.5小时内是否有更高的点
@@ -3167,8 +3175,8 @@ def get_position_color(account_id, total_cost):
                 }
                 
                 // 如果2.5小时内没有创新高，标记平仓信号
-                if (!foundHigher && checkEnd > highIdx + 1) {
-                    const closeIdx = Math.min(highIdx + TWO_HALF_HOURS, accountData.length - 1);
+                if (!foundHigher) {
+                    const closeIdx = highIdx + TWO_HALF_HOURS;
                     const closePoint = accountData[closeIdx];
                     
                     signals.closeSignals.push({
