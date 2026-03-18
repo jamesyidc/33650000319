@@ -4570,8 +4570,8 @@ def get_position_color(account_id, total_cost):
                 <span style="margin-left: 20px; color: #10b981;">✅ 日期已同步</span>
             `;
             
-            // 初始加载（先加载设置，再加载数据）
-            await loadPositionSettings();  // ✅ 先加载仓位设置（等待完成）
+            // 初始加载（所有加载并发进行，不阻塞）
+            loadPositionSettings();  // ✅ 加载仓位设置
             loadStrategies();  // 🎯 加载账户策略
             loadPrediction();  // 📊 加载今日预测
             loadState();
