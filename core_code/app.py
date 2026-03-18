@@ -1953,7 +1953,10 @@ def abc_position_real_positions():
 def abc_position_history():
     """获取ABC Position历史数据"""
     try:
-        date = request.args.get('date', datetime.now().strftime('%Y%m%d'))
+        # 使用北京时间 (UTC+8) 作为默认日期
+        beijing_tz = pytz.timezone('Asia/Shanghai')
+        beijing_now = datetime.now(beijing_tz)
+        date = request.args.get('date', beijing_now.strftime('%Y%m%d'))
         history_file = Path(f'/home/user/webapp/data/abc_position/abc_position_{date}.jsonl')
         
         if not history_file.exists():

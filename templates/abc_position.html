@@ -961,6 +961,102 @@
             <div class="docs-content" id="docsContent">
                 <div class="docs-body">
                     
+                    <!-- ⚠️ 重要问题修复说明 -->
+                    <div class="docs-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <h3 style="color: #fff; margin-top: 0;">🔧 重要问题修复：部署后页面显示历史数据的解决方案</h3>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="color: #ffd700; margin-top: 0;">❌ 问题描述</h4>
+                            <p style="margin: 10px 0; line-height: 1.6;">
+                                部署完成后，打开ABC Position页面时，发现页面显示的是<strong>昨天的历史数据</strong>，而不是今天的实时数据。
+                                即使采集器正在正常运行，页面仍然卡在历史日期上。
+                            </p>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="color: #ff6b6b; margin-top: 0;">🔍 问题根本原因</h4>
+                            <p style="margin: 10px 0; line-height: 1.6;">
+                                <strong>时区不一致导致的日期错误：</strong>
+                            </p>
+                            <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                                <li><strong>服务器时区</strong>：使用 UTC 时间（例如：2026-03-18 19:00）</li>
+                                <li><strong>北京时间</strong>：UTC+8（例如：2026-03-19 03:00）</li>
+                                <li><strong>前端页面</strong>：使用北京时间计算日期（正确的 20260319）</li>
+                                <li><strong>后端API</strong>：使用服务器本地时间（错误的 20260318）</li>
+                            </ul>
+                            <p style="margin: 10px 0; line-height: 1.6;">
+                                当前端请求"今天"的数据时（20260319），后端如果没有明确传递日期参数，会使用服务器本地时间的默认值（20260318），
+                                导致返回昨天的数据。因为北京时间与服务器UTC时间相差8小时，所以在北京时间凌晨0点到8点之间，
+                                两者的日期是不同的。
+                            </p>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="color: #51cf66; margin-top: 0;">✅ 解决方案</h4>
+                            <p style="margin: 10px 0; line-height: 1.6;">
+                                修改后端API (<code>core_code/app.py</code>)，在 <code>abc_position_history()</code> 函数中：
+                            </p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; color: #fff; margin: 10px 0;">
+<span style="color: #ff6b6b;">❌ 修复前（错误代码）：</span>
+date = request.args.get('date', datetime.now().strftime('%Y%m%d'))
+<span style="color: #888;">↑ 使用服务器本地时间（UTC），导致日期不匹配</span>
+
+<span style="color: #51cf66;">✅ 修复后（正确代码）：</span>
+beijing_tz = pytz.timezone('Asia/Shanghai')
+beijing_now = datetime.now(beijing_tz)
+date = request.args.get('date', beijing_now.strftime('%Y%m%d'))
+<span style="color: #888;">↑ 使用北京时间，确保前后端日期一致</span></pre>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="color: #4dabf7; margin-top: 0;">🎯 修复效果</h4>
+                            <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                                <li>✅ 页面打开时<strong>自动显示今天（北京时间）的实时数据</strong></li>
+                                <li>✅ 前后端日期完全一致，不再出现日期错位</li>
+                                <li>✅ 数据采集器、后端API、前端页面<strong>全部使用北京时间</strong></li>
+                                <li>✅ 即使在凌晨0点到8点之间，也能正确显示当天数据</li>
+                                <li>✅ 不需要手动选择日期，部署后立即可用</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="color: #ffd700; margin-top: 0;">📝 相关修改文件</h4>
+                            <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                                <li><code>core_code/app.py</code> - 修复 <code>abc_position_history()</code> API函数</li>
+                                <li><code>source_code/abc_position_tracker.py</code> - 数据采集器（已使用北京时间）</li>
+                                <li><code>templates/abc_position.html</code> - 前端页面（已使用北京时间）</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="color: #ff922b; margin-top: 0;">⚡ 应用修复后的操作</h4>
+                            <ol style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                                <li>修改 <code>core_code/app.py</code> 文件</li>
+                                <li>重启Flask应用：<code>pm2 restart flask-app</code></li>
+                                <li>刷新浏览器页面（强制刷新：Ctrl+F5 或 Cmd+Shift+R）</li>
+                                <li>确认页面显示今天的日期和实时数据</li>
+                            </ol>
+                        </div>
+                        
+                        <div style="background: rgba(255,87,87,0.2); padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #ff5757;">
+                            <h4 style="color: #ffd700; margin-top: 0;">💡 经验总结</h4>
+                            <p style="margin: 10px 0; line-height: 1.6;">
+                                <strong>教训</strong>：在多时区系统中，<strong>所有时间相关的操作都必须统一使用同一个时区</strong>（本系统使用北京时间UTC+8）。
+                                这包括：
+                            </p>
+                            <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                                <li>✅ 数据采集时的时间戳</li>
+                                <li>✅ 文件命名中的日期</li>
+                                <li>✅ API默认参数的日期</li>
+                                <li>✅ 前端JavaScript的日期计算</li>
+                            </ul>
+                            <p style="margin: 10px 0; line-height: 1.6;">
+                                <strong>最佳实践</strong>：建议在项目开始时就明确定义时区策略，并在所有代码中严格执行。
+                                对于中国用户，统一使用 <code>pytz.timezone('Asia/Shanghai')</code> 可以避免大部分时区相关的bug。
+                            </p>
+                        </div>
+                    </div>
+                    
                     <!-- 系统概述 -->
                     <div class="docs-section">
                         <h3>🎯 系统概述</h3>
