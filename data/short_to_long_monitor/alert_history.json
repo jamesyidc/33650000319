@@ -8,5 +8,15 @@
     "actual_ratio": 30.53,
     "current_ratio": 55.68,
     "check_time": "2026-03-19 22:35:46"
+  },
+  {
+    "date": "20260320",
+    "trigger_time": "02:25:06",
+    "min_ratio": 0.0,
+    "min_time": "00:31:16",
+    "trigger_ratio": 30.0,
+    "actual_ratio": 30.17,
+    "current_ratio": 30.17,
+    "check_time": "2026-03-20 02:26:10"
   }
 ]
