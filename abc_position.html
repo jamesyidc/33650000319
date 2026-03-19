@@ -249,6 +249,40 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
         
+        .close-all-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .close-all-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+        
+        .close-all-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .close-all-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .account-header {
             display: flex;
             justify-content: space-between;
@@ -2540,6 +2574,9 @@ def get_position_color(account_id, total_cost):
                         <button class="account-settings-btn" onclick="openAccountSettings('${accId}')" title="设置ABC阈值">
                             ⚙️ ABC设置
                         </button>
+                        <button class="close-all-btn" onclick="closeAllPositions('${accId}', '${accountName}')" title="一键平仓所有持仓">
+                            🔴 一键平仓
+                        </button>
                         
                         <!-- 策略选择 -->
                         <div style="margin: 10px 0; padding: 8px; background: rgba(102, 126, 234, 0.1); border-radius: 6px;">
@@ -3168,6 +3205,97 @@ def get_position_color(account_id, total_cost):
             } catch (error) {
                 console.error('保存设置失败:', error);
                 alert('❌ 保存失败');
+            }
+        }
+        
+        // 一键平仓功能
+        async function closeAllPositions(accountId, accountName) {
+            // 获取当前账户的持仓信息
+            const account = currentState?.accounts?.[accountId];
+            
+            if (!account || !account.positions || account.positions.length === 0) {
+                alert(`❌ ${accountName} 当前没有持仓`);
+                return;
+            }
+            
+            const positionCount = account.positions.length;
+            const totalCost = account.total_cost || 0;
+            const unrealizedPnl = account.unrealized_pnl || 0;
+            const pnlPct = totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0;
+            
+            // 构建持仓详情
+            let positionDetails = account.positions.map((pos, idx) => 
+                `${idx + 1}. ${pos.symbol}: ${pos.side === 'long' ? '多' : '空'} ${Math.abs(pos.size)} 张，成本 ${pos.cost.toFixed(2)} USDT`
+            ).join('\n');
+            
+            // 确认对话框
+            const confirmed = confirm(
+                `⚠️ 确认要平掉 ${accountName} 的所有持仓吗？\n\n` +
+                `📊 持仓数量：${positionCount} 个\n` +
+                `💰 总成本：${totalCost.toFixed(2)} USDT\n` +
+                `📈 未实现盈亏：${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toFixed(2)} USDT (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)\n\n` +
+                `持仓详情：\n${positionDetails}\n\n` +
+                `⚠️ 此操作不可撤销！`
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            // 二次确认
+            const finalConfirm = confirm(
+                `🔴 最终确认\n\n` +
+                `您即将平掉 ${accountName} 的所有 ${positionCount} 个持仓。\n` +
+                `请再次确认是否继续？`
+            );
+            
+            if (!finalConfirm) {
+                return;
+            }
+            
+            // 调用API执行平仓
+            try {
+                const response = await fetch('/abc-position/api/close-all-positions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        account_id: accountId,
+                        account_name: accountName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const successCount = data.closed_positions || 0;
+                    const failCount = data.failed_positions || 0;
+                    
+                    let message = `✅ 平仓操作完成！\n\n`;
+                    message += `成功平仓：${successCount} 个\n`;
+                    
+                    if (failCount > 0) {
+                        message += `失败：${failCount} 个\n`;
+                    }
+                    
+                    if (data.details && data.details.length > 0) {
+                        message += `\n详情：\n`;
+                        data.details.forEach((detail, idx) => {
+                            message += `${idx + 1}. ${detail}\n`;
+                        });
+                    }
+                    
+                    alert(message);
+                    
+                    // 刷新数据
+                    await loadData();
+                } else {
+                    alert(`❌ 平仓失败: ${data.error || '未知错误'}`);
+                }
+            } catch (error) {
+                console.error('一键平仓失败:', error);
+                alert(`❌ 一键平仓失败: ${error.message}`);
             }
         }
         

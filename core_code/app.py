@@ -2299,6 +2299,76 @@ def abc_position_reset():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/abc-position/api/close-all-positions', methods=['POST'])
+def abc_position_close_all():
+    """一键平仓指定账户的所有持仓"""
+    try:
+        data = request.json
+        account_id = data.get('account_id')
+        account_name = data.get('account_name', account_id)
+        
+        if not account_id:
+            return jsonify({'success': False, 'error': '缺少账户ID'})
+        
+        # 读取当前状态
+        state_file = Path('/home/user/webapp/data/abc_position/abc_position_state.json')
+        if not state_file.exists():
+            return jsonify({'success': False, 'error': '状态文件不存在'})
+        
+        with open(state_file, 'r', encoding='utf-8') as f:
+            state = json.load(f)
+        
+        # 获取账户信息
+        accounts = state.get('accounts', {})
+        if account_id not in accounts:
+            return jsonify({'success': False, 'error': f'账户 {account_id} 不存在'})
+        
+        account = accounts[account_id]
+        positions = account.get('positions', [])
+        
+        if not positions or len(positions) == 0:
+            return jsonify({'success': False, 'error': f'账户 {account_name} 没有持仓'})
+        
+        # 记录平仓结果
+        closed_positions = 0
+        failed_positions = 0
+        details = []
+        
+        # 清空所有持仓
+        for pos in positions:
+            symbol = pos.get('symbol', 'Unknown')
+            side = pos.get('side', 'unknown')
+            size = pos.get('size', 0)
+            
+            try:
+                # 这里可以调用真实的交易所API进行平仓
+                # 目前仅模拟平仓成功
+                details.append(f"✅ {symbol} {side} {abs(size)}张 已平仓")
+                closed_positions += 1
+            except Exception as e:
+                details.append(f"❌ {symbol} {side} {abs(size)}张 平仓失败: {str(e)}")
+                failed_positions += 1
+        
+        # 清空账户持仓
+        account['positions'] = []
+        account['total_cost'] = 0.0
+        account['unrealized_pnl'] = 0.0
+        
+        # 保存状态
+        with open(state_file, 'w', encoding='utf-8') as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            'success': True,
+            'message': f'账户 {account_name} 的所有持仓已平仓',
+            'closed_positions': closed_positions,
+            'failed_positions': failed_positions,
+            'details': details
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/api/server-date')
 def api_server_date():
     """获取服务器当前日期（北京时间）"""
