@@ -24940,7 +24940,7 @@ def get_account_limit():
 
 @app.route('/api/coin-change-tracker/latest', methods=['GET'])
 def get_coin_change_latest():
-    """获取最新的27币涨跌幅数据（包含RSI）"""
+    """获取最新的27币涨跌幅数据（包含RSI和日内高低价）"""
     try:
         from datetime import datetime, timezone, timedelta
         from pathlib import Path
@@ -24965,7 +24965,7 @@ def get_coin_change_latest():
                 'error': f'今天的数据文件不存在: {date_str}'
             })
         
-        # 读取最后一条币价记录
+        # 读取所有数据以计算日内高低价
         with open(data_file, 'r') as f:
             lines = f.readlines()
             if not lines:
@@ -24973,7 +24973,48 @@ def get_coin_change_latest():
                     'success': False,
                     'error': '数据文件为空'
                 })
+            
+            # 解析最后一条记录
             latest = json.loads(lines[-1].strip())
+            
+            # 🆕 计算每个币种的日内最高价和最低价
+            daily_highs = {}  # {symbol: high_price}
+            daily_lows = {}   # {symbol: low_price}
+            
+            # 遍历当天所有记录
+            for line in lines:
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line.strip())
+                    changes = record.get('changes', {})
+                    
+                    for symbol, coin_data in changes.items():
+                        current_price = coin_data.get('current_price')
+                        if current_price is None:
+                            continue
+                        
+                        # 更新最高价
+                        if symbol not in daily_highs:
+                            daily_highs[symbol] = current_price
+                        else:
+                            daily_highs[symbol] = max(daily_highs[symbol], current_price)
+                        
+                        # 更新最低价
+                        if symbol not in daily_lows:
+                            daily_lows[symbol] = current_price
+                        else:
+                            daily_lows[symbol] = min(daily_lows[symbol], current_price)
+                except:
+                    continue
+            
+            # 🆕 将日内高低价添加到最新数据的changes中
+            if 'changes' in latest:
+                for symbol, coin_data in latest['changes'].items():
+                    if symbol in daily_highs:
+                        coin_data['high_price'] = daily_highs[symbol]
+                    if symbol in daily_lows:
+                        coin_data['low_price'] = daily_lows[symbol]
         
         # 读取RSI数据
         rsi_file = data_dir / f'rsi_{date_str}.jsonl'
