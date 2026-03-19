@@ -318,7 +318,6 @@
       "interpreter": "python3",
       "autorestart": true,
       "max_memory_restart": "200M",
-      "cron_restart": "*/5 * * * *",
       "env": {
         "PYTHONUNBUFFERED": "1"
       },

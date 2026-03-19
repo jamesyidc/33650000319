@@ -10,7 +10,7 @@ import sys
 import json
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # Telegram 配置
@@ -100,7 +100,14 @@ def get_sar_bias_data():
     try:
         response = requests.get(API_URL, timeout=10)
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            # 计算实际的看多/看空点数（>80% 的币种数量）
+            bullish_count = len(data.get('bullish_symbols', []))
+            bearish_count = len(data.get('bearish_symbols', []))
+            # 添加计算后的值到返回数据
+            data['bullish_count'] = bullish_count
+            data['bearish_count'] = bearish_count
+            return data
         else:
             print(f"❌ API 请求失败: {response.status_code}")
             return None
@@ -167,19 +174,27 @@ def check_and_alert():
     if bullish_changed:
         change = format_change_indicator(last_bullish, current_bullish)
         status = "⚠️ 偏多" if bullish_ratio > BULLISH_THRESHOLD else ""
+        bullish_symbols = data.get('bullish_symbols', [])
+        symbol_list = ", ".join([f"{s['symbol']}({s['ratio']:.1f}%)" for s in bullish_symbols[:10]])  # 只显示前10个
+        more_text = f"... 等{len(bullish_symbols)}个" if len(bullish_symbols) > 10 else ""
         message_parts.append(
             f"📈 *看多点数*: {current_bullish} {change}\n"
-            f"   比例: {bullish_ratio:.1f}% {status}"
+            f"   比例: {bullish_ratio:.1f}% {status}\n"
+            f"   币种: {symbol_list}{more_text}" if bullish_symbols else f"📈 *看多点数*: {current_bullish} {change}\n   比例: {bullish_ratio:.1f}% {status}"
         )
     
     if bearish_changed:
         change = format_change_indicator(last_bearish, current_bearish)
         status = "⚠️ 偏空" if bearish_ratio > BEARISH_THRESHOLD else ""
+        bearish_symbols = data.get('bearish_symbols', [])
+        symbol_list = ", ".join([f"{s['symbol']}({s['ratio']:.1f}%)" for s in bearish_symbols[:10]])
+        more_text = f"... 等{len(bearish_symbols)}个" if len(bearish_symbols) > 10 else ""
         if bullish_changed:
             message_parts.append("\n")
         message_parts.append(
             f"📉 *看空点数*: {current_bearish} {change}\n"
-            f"   比例: {bearish_ratio:.1f}% {status}"
+            f"   比例: {bearish_ratio:.1f}% {status}\n"
+            f"   币种: {symbol_list}{more_text}" if bearish_symbols else f"📉 *看空点数*: {current_bearish} {change}\n   比例: {bearish_ratio:.1f}% {status}"
         )
     
     message_parts.extend([
@@ -225,27 +240,33 @@ def check_and_alert():
 
 
 def main():
-    """主函数"""
+    """主函数 - 持续运行模式"""
     print("🚀 SAR Bias Monitor 启动")
     print(f"监控阈值: 看多 >{BULLISH_THRESHOLD}%, 看空 >{BEARISH_THRESHOLD}%")
     print(f"API: {API_URL}")
     print(f"状态文件: {STATE_FILE}")
     print(f"历史文件: {HISTORY_FILE}")
+    print(f"检查间隔: 5 分钟")
     
     # 检查 Telegram 配置
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("\n⚠️ 警告: Telegram 未配置，将只打印日志不发送消息")
     
-    # 执行检查
-    try:
-        check_and_alert()
-    except Exception as e:
-        print(f"\n❌ 监控执行失败: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    print("\n🔄 进入监控循环...")
     
-    print("\n✅ 监控执行完成")
+    # 持续运行，每5分钟检查一次
+    while True:
+        try:
+            check_and_alert()
+        except Exception as e:
+            print(f"\n❌ 监控执行失败: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # 等待5分钟
+        print(f"\n⏰ 下次检查时间: {datetime.now() + timedelta(minutes=5)}")
+        print("=" * 60)
+        time.sleep(300)  # 300秒 = 5分钟
 
 
 if __name__ == "__main__":
