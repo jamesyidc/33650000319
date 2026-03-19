@@ -25970,10 +25970,15 @@ def get_10min_up_ratio():
                 'aggregated_data': []
             })
         
+        # 🔥 计算目标日期（用于过滤，确保只返回当天数据）
+        # 将 file_date_str (YYYYMMDD) 转换为 YYYY-MM-DD 格式
+        target_date = f"{file_date_str[:4]}-{file_date_str[4:6]}-{file_date_str[6:8]}"
+        
         # 读取所有数据并按10分钟聚合
         aggregated_data = []
         current_bucket = None
         bucket_data = []
+        filtered_count = 0  # 统计过滤掉的记录数
         
         with open(data_file, 'r', encoding='utf-8') as f:
             for line in f:
@@ -25988,6 +25993,12 @@ def get_10min_up_ratio():
                     # 提取时间 "2026-03-16 01:10:20" -> "01:10"
                     time_parts = beijing_time.split(' ')
                     if len(time_parts) < 2:
+                        continue
+                    
+                    # 🔥 关键修复：只处理目标日期的数据，过滤掉其他日期
+                    record_date = time_parts[0]  # "2026-03-16"
+                    if record_date != target_date:
+                        filtered_count += 1
                         continue
                     
                     time_str = time_parts[1]  # "01:10:20"
@@ -26040,7 +26051,8 @@ def get_10min_up_ratio():
             'data': aggregated_data,
             'aggregated_data': aggregated_data,  # 保持兼容性
             'count': len(aggregated_data),
-            'date': file_date_str
+            'date': file_date_str,
+            'filtered_records': filtered_count  # 🔥 添加过滤统计
         })
         
         # 添加禁用缓存的响应头

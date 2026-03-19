@@ -1,0 +1,19 @@
+[
+  {
+    "time": "2026-03-20 00:02:15",
+    "type": "turn_bullish",
+    "from_ratio": 0.0,
+    "to_ratio": 0.0,
+    "from_status": "bearish",
+    "to_status": "bullish",
+    "threshold": -20.0,
+    "max_ratio": 0.0,
+    "data": {
+      "ratio": 0.0,
+      "positive_count": 0,
+      "total_count": 2,
+      "date": "20260320",
+      "positive_duration": 0.0
+    }
+  }
+]
