@@ -3248,19 +3248,33 @@ def get_position_color(account_id, total_cost):
             // 获取当前账户的持仓信息
             const account = currentState?.accounts?.[accountId];
             
-            if (!account || !account.positions || account.positions.length === 0) {
+            if (!account || !account.positions) {
+                alert(`❌ ${accountName} 账户数据不存在`);
+                return;
+            }
+            
+            // 提取实际的持仓列表（positions可能是对象{A, B, C}或数组）
+            let positionsList = [];
+            if (Array.isArray(account.positions)) {
+                positionsList = account.positions;
+            } else if (typeof account.positions === 'object') {
+                // 从对象{A: {...}, B: {...}, C: {...}}中提取非空持仓
+                positionsList = Object.values(account.positions).filter(p => p && p !== null);
+            }
+            
+            if (positionsList.length === 0) {
                 alert(`❌ ${accountName} 当前没有持仓`);
                 return;
             }
             
-            const positionCount = account.positions.length;
+            const positionCount = positionsList.length;
             const totalCost = account.total_cost || 0;
             const unrealizedPnl = account.unrealized_pnl || 0;
             const pnlPct = totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0;
             
             // 构建持仓详情
-            let positionDetails = account.positions.map((pos, idx) => 
-                `${idx + 1}. ${pos.symbol}: ${pos.side === 'long' ? '多' : '空'} ${Math.abs(pos.size)} 张，成本 ${pos.cost.toFixed(2)} USDT`
+            let positionDetails = positionsList.map((pos, idx) => 
+                `${idx + 1}. ${pos.symbol || 'Unknown'}: ${pos.side === 'long' ? '多' : '空'} ${Math.abs(pos.size || 0)} 张，成本 ${(pos.cost || 0).toFixed(2)} USDT`
             ).join('\n');
             
             // 确认对话框

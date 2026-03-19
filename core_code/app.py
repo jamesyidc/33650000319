@@ -2326,7 +2326,15 @@ def abc_position_close_all():
         account = accounts[account_id]
         positions = account.get('positions', [])
         
-        if not positions or len(positions) == 0:
+        # 提取实际的持仓列表（positions可能是对象{A, B, C}或数组）
+        positions_list = []
+        if isinstance(positions, list):
+            positions_list = positions
+        elif isinstance(positions, dict):
+            # 从对象{A: {...}, B: {...}, C: {...}}中提取非空持仓
+            positions_list = [p for p in positions.values() if p is not None]
+        
+        if not positions_list or len(positions_list) == 0:
             return jsonify({'success': False, 'error': f'账户 {account_name} 没有持仓'})
         
         # 记录平仓结果
@@ -2335,7 +2343,7 @@ def abc_position_close_all():
         details = []
         
         # 清空所有持仓
-        for pos in positions:
+        for pos in positions_list:
             symbol = pos.get('symbol', 'Unknown')
             side = pos.get('side', 'unknown')
             size = pos.get('size', 0)
@@ -2349,8 +2357,11 @@ def abc_position_close_all():
                 details.append(f"❌ {symbol} {side} {abs(size)}张 平仓失败: {str(e)}")
                 failed_positions += 1
         
-        # 清空账户持仓
-        account['positions'] = []
+        # 清空账户持仓（兼容两种格式）
+        if isinstance(account.get('positions'), dict):
+            account['positions'] = {'A': None, 'B': None, 'C': None}
+        else:
+            account['positions'] = []
         account['total_cost'] = 0.0
         account['unrealized_pnl'] = 0.0
         
