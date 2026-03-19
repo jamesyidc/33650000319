@@ -2424,11 +2424,13 @@ def get_position_color(account_id, total_cost):
                 const data = await response.json();
                 
                 if (data.success) {
-                    currentState = data.state;
+                    // 🔥 修复：API返回的是data.data，不是data.state
+                    currentState = data.data;
+                    console.log('✅ currentState已加载:', currentState);
                     updateUI();
                 }
             } catch (error) {
-                console.error('加载状态失败:', error);
+                console.error('❌ 加载状态失败:', error);
             }
         }
         
