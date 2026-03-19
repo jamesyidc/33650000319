@@ -2324,58 +2324,95 @@ def abc_position_close_all():
             return jsonify({'success': False, 'error': f'账户 {account_id} 不存在'})
         
         account = accounts[account_id]
-        positions = account.get('positions', [])
         
-        # 提取实际的持仓列表（positions可能是对象{A, B, C}或数组）
-        positions_list = []
-        if isinstance(positions, list):
-            positions_list = positions
-        elif isinstance(positions, dict):
-            # 从对象{A: {...}, B: {...}, C: {...}}中提取非空持仓
-            positions_list = [p for p in positions.values() if p is not None]
+        # 🔥 关键修复：使用position_count判断，而不是positions对象
+        position_count = account.get('position_count', 0)
         
-        if not positions_list or len(positions_list) == 0:
+        if position_count == 0:
             return jsonify({'success': False, 'error': f'账户 {account_name} 没有持仓'})
         
-        # 记录平仓结果
-        closed_positions = 0
-        failed_positions = 0
-        details = []
+        # 🔥 从真实OKX API获取持仓信息并执行平仓
+        # 映射account_id到OKX账户配置
+        account_mapping = {
+            'A': 'main',
+            'B': 'poit_main',
+            'C': 'fangfang12',
+            'D': 'dadanini'
+        }
         
-        # 清空所有持仓
-        for pos in positions_list:
-            symbol = pos.get('symbol', 'Unknown')
-            side = pos.get('side', 'unknown')
-            size = pos.get('size', 0)
+        okx_account_key = account_mapping.get(account_id, '')
+        if not okx_account_key:
+            return jsonify({'success': False, 'error': f'无效的账户ID: {account_id}'})
+        
+        # 获取OKX账户凭证
+        accounts_config = {
+            'main': {
+                'api_key': 'b0c18f2d-e014-4ae8-9c3c-cb02161de4db',
+                'secret_key': '92F864C599B2CE2EC5186AD14C8B4110',
+                'passphrase': 'Tencent@123'
+            },
+            'poit_main': {
+                'api_key': '8650e46c-059b-431d-93cf-55f8c79babdb',
+                'secret_key': '4C2BD2AC6A08615EA7F36A6251857FCE',
+                'passphrase': 'Wu666666.'
+            },
+            'fangfang12': {
+                'api_key': 'e5867a9a-93b7-476f-81ce-093c3aacae0d',
+                'secret_key': '4624EE63A9BF3F84250AC71C9A37F47D',
+                'passphrase': 'Tencent@123'
+            },
+            'dadanini': {
+                'api_key': '1463198a-fad0-46ac-9ad8-2a386461782c',
+                'secret_key': '1D112283B7456290056C253C56E9F3A6',
+                'passphrase': 'Tencent@123'
+            }
+        }
+        
+        okx_config = accounts_config.get(okx_account_key, {})
+        if not okx_config:
+            return jsonify({'success': False, 'error': f'找不到账户配置: {okx_account_key}'})
+        
+        # 调用OKX平仓API（复用已有的close-all-positions端点）
+        try:
+            import requests as req
+            close_url = 'http://localhost:9002/api/okx-trading/close-all-positions'
+            close_response = req.post(close_url, json={
+                'apiKey': okx_config['api_key'],
+                'apiSecret': okx_config['secret_key'],
+                'passphrase': okx_config['passphrase'],
+                'accountId': account_id
+            }, timeout=30)
             
-            try:
-                # 这里可以调用真实的交易所API进行平仓
-                # 目前仅模拟平仓成功
-                details.append(f"✅ {symbol} {side} {abs(size)}张 已平仓")
-                closed_positions += 1
-            except Exception as e:
-                details.append(f"❌ {symbol} {side} {abs(size)}张 平仓失败: {str(e)}")
-                failed_positions += 1
-        
-        # 清空账户持仓（兼容两种格式）
-        if isinstance(account.get('positions'), dict):
-            account['positions'] = {'A': None, 'B': None, 'C': None}
-        else:
-            account['positions'] = []
-        account['total_cost'] = 0.0
-        account['unrealized_pnl'] = 0.0
-        
-        # 保存状态
-        with open(state_file, 'w', encoding='utf-8') as f:
-            json.dump(state, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({
-            'success': True,
-            'message': f'账户 {account_name} 的所有持仓已平仓',
-            'closed_positions': closed_positions,
-            'failed_positions': failed_positions,
-            'details': details
-        })
+            close_data = close_response.json()
+            
+            if close_data.get('success'):
+                # 平仓成功，清空状态文件中的持仓信息
+                if isinstance(account.get('positions'), dict):
+                    account['positions'] = {'A': None, 'B': None, 'C': None}
+                else:
+                    account['positions'] = []
+                account['total_cost'] = 0.0
+                account['unrealized_pnl'] = 0.0
+                account['position_count'] = 0
+                
+                # 保存状态
+                with open(state_file, 'w', encoding='utf-8') as f:
+                    json.dump(state, f, ensure_ascii=False, indent=2)
+                
+                return jsonify({
+                    'success': True,
+                    'message': close_data.get('message', '平仓成功'),
+                    'closed_positions': close_data.get('closed_count', 0),
+                    'failed_positions': 0,
+                    'details': close_data.get('details', [])
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': close_data.get('error', '平仓失败')
+                })
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'调用平仓API失败: {str(e)}'})
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
