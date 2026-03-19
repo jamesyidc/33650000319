@@ -1068,3 +1068,13 @@
 {"timestamp": 1773932548943, "beijing_time": "2026-03-19 23:02:04", "velocity_5min": -3.07, "current_total_change": -55.85, "total_change_5min_ago": -52.78}
 {"timestamp": 1773932621116, "beijing_time": "2026-03-19 23:03:28", "velocity_5min": -0.41, "current_total_change": -51.94, "total_change_5min_ago": -51.53}
 {"timestamp": 1773932693237, "beijing_time": "2026-03-19 23:04:41", "velocity_5min": 2.88, "current_total_change": -49.2, "total_change_5min_ago": -52.08}
+{"timestamp": 1773932765348, "beijing_time": "2026-03-19 23:05:53", "velocity_5min": 8.44, "current_total_change": -46.6, "total_change_5min_ago": -55.04}
+{"timestamp": 1773932849585, "beijing_time": "2026-03-19 23:07:05", "velocity_5min": 10.65, "current_total_change": -45.2, "total_change_5min_ago": -55.85}
+{"timestamp": 1773932921908, "beijing_time": "2026-03-19 23:08:29", "velocity_5min": -0.98, "current_total_change": -52.92, "total_change_5min_ago": -51.94}
+{"timestamp": 1773932993827, "beijing_time": "2026-03-19 23:09:41", "velocity_5min": -2.87, "current_total_change": -52.07, "total_change_5min_ago": -49.2}
+{"timestamp": 1773933065875, "beijing_time": "2026-03-19 23:10:53", "velocity_5min": -5.88, "current_total_change": -52.48, "total_change_5min_ago": -46.6}
+{"timestamp": 1773933150161, "beijing_time": "2026-03-19 23:12:05", "velocity_5min": -10.66, "current_total_change": -55.86, "total_change_5min_ago": -45.2}
+{"timestamp": 1773933222304, "beijing_time": "2026-03-19 23:13:30", "velocity_5min": -2.27, "current_total_change": -55.19, "total_change_5min_ago": -52.92}
+{"timestamp": 1773933294288, "beijing_time": "2026-03-19 23:14:42", "velocity_5min": -3.31, "current_total_change": -55.38, "total_change_5min_ago": -52.07}
+{"timestamp": 1773933366554, "beijing_time": "2026-03-19 23:15:54", "velocity_5min": -3.38, "current_total_change": -55.86, "total_change_5min_ago": -52.48}
+{"timestamp": 1773933451520, "beijing_time": "2026-03-19 23:17:06", "velocity_5min": 2.68, "current_total_change": -53.18, "total_change_5min_ago": -55.86}
