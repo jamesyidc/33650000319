@@ -25622,7 +25622,9 @@ def get_velocity_stats():
             })
         
         # 读取所有数据计算统计
-        # 🔥 只统计00:05之后的数据（涨速需要5分钟历史数据）
+        # 🔥 只统计00:10之后的数据（避免跨天时刻的异常涨速数据）
+        # 原因：00:00-00:10的数据在计算涨速时使用的是昨天23:55-00:05的基准数据
+        # 导致涨速计算异常（例如：-3.92 - (-59.35) = 55.43）
         velocities = []
         records_with_velocity = []  # 保存完整记录用于查找max/min时间
         latest_record = None
@@ -25634,7 +25636,7 @@ def get_velocity_stats():
                     record = json.loads(line.strip())
                     beijing_time_str = record.get('beijing_time', '')
                     
-                    # 🔥 只统计00:05及之后的数据
+                    # 🔥 只统计00:10及之后的数据（避免跨天异常）
                     if beijing_time_str:
                         time_part = beijing_time_str.split(' ')[1] if ' ' in beijing_time_str else ''
                         if time_part:
@@ -25642,8 +25644,8 @@ def get_velocity_stats():
                             hour, minute = int(hour), int(minute)
                             total_minutes = hour * 60 + minute
                             
-                            # 只统计从00:05开始的数据（5分钟 = 5分钟）
-                            if total_minutes >= 5:
+                            # 🔥 关键修复：从5分钟改为10分钟，过滤跨天异常数据
+                            if total_minutes >= 10:
                                 velocity = record.get('velocity_5min', 0)
                                 velocities.append(velocity)
                                 records_with_velocity.append({
@@ -25655,7 +25657,8 @@ def get_velocity_stats():
         if not velocities:
             return jsonify({
                 'success': False,
-                'error': '没有可用的涨速数据（需要00:05之后的数据）'
+                'error': '没有可用的涨速数据（需要00:10之后的数据）',
+                'message': '每日前10分钟的涨速数据会被过滤，避免跨天异常'
             })
         
         # 计算统计
