@@ -2516,6 +2516,22 @@ def get_position_color(account_id, total_cost):
         function updateUI() {
             if (!currentState) return;
             
+            // 🎯 在更新UI之前，保存当前的策略选择状态
+            const savedStrategies = {};
+            ['A', 'B', 'C', 'D'].forEach(accId => {
+                const checkboxes = document.querySelectorAll(`.strategy-check-${accId}`);
+                if (checkboxes.length > 0) {
+                    savedStrategies[accId] = [];
+                    checkboxes.forEach(cb => {
+                        if (cb.checked) {
+                            savedStrategies[accId].push(cb.value);
+                        }
+                    });
+                }
+            });
+            
+            console.log('💾 保存策略状态:', savedStrategies);
+            
             // 更新权限状态
             const permission = currentState.trading_permission;
             const permissionStatus = document.getElementById('permissionStatus');
@@ -2652,8 +2668,27 @@ def get_position_color(account_id, total_cost):
             const lastUpdate = document.getElementById('lastUpdate');
             lastUpdate.textContent = `最后更新：${new Date(currentState.last_update || Date.now()).toLocaleString()}`;
             
-            // 🎯 UI更新后，重新加载策略选择
-            setTimeout(() => loadStrategies(), 100);
+            // 🎯 UI更新后，恢复策略选择状态
+            setTimeout(() => {
+                // 先尝试恢复本地保存的状态
+                let hasLocalSaved = false;
+                ['A', 'B', 'C', 'D'].forEach(accId => {
+                    if (savedStrategies[accId] && savedStrategies[accId].length > 0) {
+                        const checkboxes = document.querySelectorAll(`.strategy-check-${accId}`);
+                        checkboxes.forEach(cb => {
+                            cb.checked = savedStrategies[accId].includes(cb.value);
+                        });
+                        hasLocalSaved = true;
+                    }
+                });
+                
+                // 如果没有本地保存的状态，则从服务器加载
+                if (!hasLocalSaved) {
+                    loadStrategies();
+                }
+                
+                console.log('🔄 策略状态已恢复');
+            }, 200);
         }
         
         // 更新图表
