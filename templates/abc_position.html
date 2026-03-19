@@ -3247,49 +3247,45 @@ def get_position_color(account_id, total_cost):
         
         // 一键平仓功能
         async function closeAllPositions(accountId, accountName) {
+            console.log('🔴 一键平仓被调用:', {accountId, accountName});
+            
             // 获取当前账户的持仓信息
             const account = currentState?.accounts?.[accountId];
             
-            if (!account || !account.positions) {
+            if (!account) {
                 alert(`❌ ${accountName} 账户数据不存在`);
                 return;
             }
             
-            // 提取实际的持仓列表（positions可能是对象{A, B, C}或数组）
-            let positionsList = [];
-            if (Array.isArray(account.positions)) {
-                positionsList = account.positions;
-            } else if (typeof account.positions === 'object') {
-                // 从对象{A: {...}, B: {...}, C: {...}}中提取非空持仓
-                positionsList = Object.values(account.positions).filter(p => p && p !== null);
-            }
-            
-            if (positionsList.length === 0) {
-                alert(`❌ ${accountName} 当前没有持仓`);
-                return;
-            }
-            
-            const positionCount = positionsList.length;
+            // 🔥 关键修复：使用position_count判断，而不是positions对象
+            const positionCount = account.position_count || 0;
             const totalCost = account.total_cost || 0;
             const unrealizedPnl = account.unrealized_pnl || 0;
             const pnlPct = totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0;
             
-            // 构建持仓详情
-            let positionDetails = positionsList.map((pos, idx) => 
-                `${idx + 1}. ${pos.symbol || 'Unknown'}: ${pos.side === 'long' ? '多' : '空'} ${Math.abs(pos.size || 0)} 张，成本 ${(pos.cost || 0).toFixed(2)} USDT`
-            ).join('\n');
+            console.log('📊 账户持仓信息:', {
+                positionCount,
+                totalCost,
+                unrealizedPnl,
+                pnlPct
+            });
             
-            // 确认对话框
+            if (positionCount === 0) {
+                alert(`❌ ${accountName} 当前没有持仓`);
+                return;
+            }
+            
+            // 确认对话框（简化版，因为状态文件中没有详细持仓信息）
             const confirmed = confirm(
                 `⚠️ 确认要平掉 ${accountName} 的所有持仓吗？\n\n` +
                 `📊 持仓数量：${positionCount} 个\n` +
                 `💰 总成本：${totalCost.toFixed(2)} USDT\n` +
                 `📈 未实现盈亏：${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toFixed(2)} USDT (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)\n\n` +
-                `持仓详情：\n${positionDetails}\n\n` +
                 `⚠️ 此操作不可撤销！`
             );
             
             if (!confirmed) {
+                console.log('❌ 用户取消第一次确认');
                 return;
             }
             
@@ -3301,6 +3297,7 @@ def get_position_color(account_id, total_cost):
             );
             
             if (!finalConfirm) {
+                console.log('❌ 用户取消第二次确认');
                 return;
             }
             

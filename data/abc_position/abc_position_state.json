@@ -21,8 +21,8 @@
         "C": null
       },
       "total_cost": 10.0378352,
-      "unrealized_pnl": 4.783719999999996,
-      "pnl_pct": 47.66,
+      "unrealized_pnl": 4.153600000000086,
+      "pnl_pct": 41.38,
       "position_count": 1,
       "account_name": "POIT",
       "okx_account": "account_poit_main",
@@ -63,6 +63,6 @@
     "last_update": null
   },
   "current_direction": "none",
-  "last_update": "2026-03-20T03:11:38.696207+08:00",
+  "last_update": "2026-03-20T03:12:40.113146+08:00",
   "trigger_history": []
 }
