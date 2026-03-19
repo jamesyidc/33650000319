@@ -319,7 +319,9 @@
       "autorestart": true,
       "max_memory_restart": "200M",
       "env": {
-        "PYTHONUNBUFFERED": "1"
+        "PYTHONUNBUFFERED": "1",
+        "TELEGRAM_BOT_TOKEN": "8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0",
+        "TELEGRAM_CHAT_ID": "-1003227444260"
       },
       "out_file": "/home/user/webapp/logs/sar-bias-monitor-out.log",
       "error_file": "/home/user/webapp/logs/sar-bias-monitor-error.log",
