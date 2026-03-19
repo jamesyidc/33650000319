@@ -4791,26 +4791,29 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
-        <!-- BTC 当日涨跌幅状态框 -->
+        <!-- BTC & ETH 当日涨跌幅状态框 -->
         <div class="mb-6">
             <div class="bg-white rounded-lg shadow-lg p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold flex items-center">
                         <i class="fab fa-bitcoin text-orange-500 mr-2"></i>
-                        BTC 当日涨跌幅状态
+                        BTC & ETH 当日涨跌幅状态
                     </h2>
                     <!-- 跳转到详细页面的按钮 -->
                     <a href="/btc-daily-range" 
                        class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
                        title="查看BTC日内详细监控">
                         <i class="fas fa-chart-line"></i>
-                        <span>详细监控</span>
+                        <span>BTC详细监控</span>
                     </a>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     <!-- BTC 涨跌幅 -->
                     <div id="btcChangeCard" class="p-4 rounded-lg border-2 transition-all duration-300">
-                        <div class="text-sm text-gray-600 mb-2">BTC 当前涨跌幅</div>
+                        <div class="text-sm text-gray-600 mb-2 flex items-center">
+                            <i class="fab fa-bitcoin text-orange-500 mr-1"></i>
+                            BTC 当前涨跌幅
+                        </div>
                         
                         <!-- 涨跌幅和价格横向排列 -->
                         <div class="flex items-center justify-between mb-2">
@@ -4840,8 +4843,43 @@ pm2 status                                                # 查看所有进程�
                         </div>
                     </div>
                     
+                    <!-- ETH 涨跌幅 -->
+                    <div id="ethChangeCard" class="p-4 rounded-lg border-2 transition-all duration-300">
+                        <div class="text-sm text-gray-600 mb-2 flex items-center">
+                            <i class="fab fa-ethereum text-purple-500 mr-1"></i>
+                            ETH 当前涨跌幅
+                        </div>
+                        
+                        <!-- 涨跌幅和价格横向排列 -->
+                        <div class="flex items-center justify-between mb-2">
+                            <div id="ethChange" class="text-3xl font-bold">--</div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500">当前价格</div>
+                                <div id="ethCurrentPrice" class="text-xl font-bold text-purple-600">--</div>
+                            </div>
+                        </div>
+                        
+                        <div id="ethStatus" class="text-lg font-semibold mb-3">--</div>
+                        
+                        <!-- 添加位置百分比显示 -->
+                        <div class="border-t pt-2 mb-2">
+                            <div class="flex items-center justify-between">
+                                <div class="text-xs text-gray-400">日内位置</div>
+                                <div id="ethPosition" class="text-sm font-bold text-blue-600">--</div>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1">
+                                0%=最低价 | 100%=最高价
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-2">
+                            <div class="text-xs text-gray-400">基准价格（0点）</div>
+                            <div id="ethBasePrice" class="text-sm font-medium text-gray-500">--</div>
+                        </div>
+                    </div>
+                    
                     <!-- 状态说明 -->
-                    <div class="col-span-1 md:col-span-1 lg:col-span-2 bg-gray-50 p-4 rounded-lg">
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2 bg-gray-50 p-4 rounded-lg">
                         <div class="text-sm font-semibold text-gray-700 mb-2">状态分类标准：</div>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                             <div class="flex items-center">
@@ -7635,8 +7673,9 @@ pm2 status                                                # 查看所有进程�
                         : lastRSIData.rsi_values;
                     updateDetailTable(data.changes, rsiValuesToUse);
                     
-                    // 更新BTC当日涨跌幅状态
+                    // 更新BTC和ETH当日涨跌幅状态
                     updateBTCStatus(data.changes);
+                    updateETHStatus(data.changes);
                     
                     // 更新RSI之和卡片（使用最新的或缓存的RSI数据）
                     const totalRSIToUse = data.total_rsi !== undefined ? data.total_rsi : lastRSIData.total_rsi;
@@ -11582,6 +11621,116 @@ pm2 status                                                # 查看所有进程�
             // 更新卡片样式
             const btcCard = document.getElementById('btcChangeCard');
             btcCard.className = `p-4 rounded-lg border-2 transition-all duration-300 ${bgColor} ${borderColor}`;
+        }
+        
+        // 更新ETH当日涨跌幅状态
+        async function updateETHStatus(changes) {
+            // 查找ETH数据
+            let ethChange = null;
+            let ethData = null;
+            for (const [symbol, data] of Object.entries(changes)) {
+                if (symbol.includes('ETH')) {
+                    ethChange = data.change_pct || 0;
+                    ethData = data;
+                    break;
+                }
+            }
+            
+            if (ethChange === null || !ethData) {
+                document.getElementById('ethChange').textContent = '--';
+                document.getElementById('ethStatus').textContent = '暂无数据';
+                document.getElementById('ethCurrentPrice').textContent = '--';
+                document.getElementById('ethBasePrice').textContent = '--';
+                document.getElementById('ethPosition').textContent = '--';
+                return;
+            }
+            
+            // 更新价格显示
+            if (ethData.current_price !== undefined) {
+                document.getElementById('ethCurrentPrice').textContent = 
+                    `$${ethData.current_price.toFixed(2)}`;
+            }
+            if (ethData.baseline_price !== undefined) {
+                document.getElementById('ethBasePrice').textContent = 
+                    `$${ethData.baseline_price.toFixed(2)}`;
+            }
+            
+            // 计算ETH日内位置百分比（从当前数据计算）
+            if (ethData.high_price !== undefined && ethData.low_price !== undefined && 
+                ethData.current_price !== undefined) {
+                const range = ethData.high_price - ethData.low_price;
+                if (range > 0) {
+                    const position = ((ethData.current_price - ethData.low_price) / range) * 100;
+                    document.getElementById('ethPosition').textContent = `${position.toFixed(2)}%`;
+                    
+                    // 根据位置设置颜色
+                    const posEl = document.getElementById('ethPosition');
+                    if (position >= 80) {
+                        posEl.className = 'text-sm font-bold text-emerald-600';
+                    } else if (position >= 60) {
+                        posEl.className = 'text-sm font-bold text-green-600';
+                    } else if (position >= 40) {
+                        posEl.className = 'text-sm font-bold text-blue-600';
+                    } else if (position >= 20) {
+                        posEl.className = 'text-sm font-bold text-orange-600';
+                    } else {
+                        posEl.className = 'text-sm font-bold text-red-600';
+                    }
+                } else {
+                    document.getElementById('ethPosition').textContent = '--';
+                }
+            }
+            
+            // 更新涨跌幅显示
+            const ethChangeEl = document.getElementById('ethChange');
+            ethChangeEl.textContent = `${ethChange > 0 ? '+' : ''}${ethChange.toFixed(2)}%`;
+            
+            // 根据涨跌幅确定状态和样式
+            let status = '';
+            let bgColor = '';
+            let textColor = '';
+            let borderColor = '';
+            
+            if (ethChange < -3) {
+                status = '主跌';
+                bgColor = 'bg-red-50';
+                textColor = 'text-red-600';
+                borderColor = 'border-red-600';
+            } else if (ethChange >= -3 && ethChange < -1.5) {
+                status = '大幅下跌';
+                bgColor = 'bg-orange-50';
+                textColor = 'text-orange-600';
+                borderColor = 'border-orange-500';
+            } else if (ethChange >= -1.5 && ethChange < 0) {
+                status = '小幅震荡偏空';
+                bgColor = 'bg-yellow-50';
+                textColor = 'text-yellow-600';
+                borderColor = 'border-yellow-400';
+            } else if (ethChange >= 0 && ethChange < 1.5) {
+                status = '小幅震荡偏多';
+                bgColor = 'bg-blue-50';
+                textColor = 'text-blue-600';
+                borderColor = 'border-blue-400';
+            } else if (ethChange >= 1.5 && ethChange < 3) {
+                status = '大幅上涨';
+                bgColor = 'bg-green-50';
+                textColor = 'text-green-600';
+                borderColor = 'border-green-500';
+            } else {
+                status = '主升';
+                bgColor = 'bg-emerald-50';
+                textColor = 'text-emerald-600';
+                borderColor = 'border-emerald-600';
+            }
+            
+            // 更新状态显示
+            document.getElementById('ethStatus').textContent = status;
+            document.getElementById('ethStatus').className = `text-lg font-semibold ${textColor}`;
+            ethChangeEl.className = `text-3xl font-bold mb-2 ${textColor}`;
+            
+            // 更新卡片样式
+            const ethCard = document.getElementById('ethChangeCard');
+            ethCard.className = `p-4 rounded-lg border-2 transition-all duration-300 ${bgColor} ${borderColor}`;
         }
         
         // 更新波峰告警框
