@@ -15,13 +15,14 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # 配置
-THRESHOLD = 40.0  # 多空分界线：40%
+THRESHOLD_OFFSET = 20.0  # 多空分界线：最高值-20%
 CHECK_INTERVAL = 60  # 检查间隔：60秒
 API_URL = "http://localhost:9002/api/coin-change-tracker/positive-ratio-stats"
+REPEAT_COUNT = 3  # Telegram消息重复发送次数
 
-# Telegram配置（从环境变量读取）
-TG_BOT_TOKEN = os.getenv('TG_BOT_TOKEN')
-TG_CHAT_ID = os.getenv('TG_CHAT_ID')
+# Telegram配置（硬编码，与market_sentiment_collector保持一致）
+TG_BOT_TOKEN = "8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0"
+TG_CHAT_ID = "-1003227444260"
 
 # 数据存储目录
 DATA_DIR = Path('/home/user/webapp/data/positive_ratio_monitor')
@@ -57,7 +58,9 @@ class PositiveRatioMonitor:
         return {
             'last_ratio': None,
             'last_status': None,  # 'bullish' or 'bearish'
-            'last_check_time': None
+            'last_check_time': None,
+            'max_ratio': None,  # 当日最高正数占比
+            'threshold': None  # 动态阈值（最高值-20%）
         }
     
     def save_state(self):
@@ -92,8 +95,32 @@ class PositiveRatioMonitor:
         except Exception as e:
             logger.error(f"保存报警历史失败: {e}")
     
+    def get_today_max_ratio(self):
+        """从历史数据中获取今日最高正数占比"""
+        try:
+            beijing_time = datetime.now(timezone(timedelta(hours=8)))
+            date_str = beijing_time.strftime('%Y%m%d')
+            
+            history_url = f"http://localhost:9002/api/coin-change-tracker/positive-ratio-history?date={date_str}"
+            response = requests.get(history_url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get('success') and data.get('data'):
+                ratios = [record['positive_ratio'] for record in data['data']]
+                max_ratio = max(ratios)
+                logger.info(f"📊 从历史数据获取今日最高值: {max_ratio:.2f}% (共{len(ratios)}条记录)")
+                return max_ratio
+            else:
+                logger.warning("⚠️ 历史数据API返回失败或无数据")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ 获取历史最高值失败: {e}")
+            return None
+    
     def get_current_ratio(self):
-        """获取当前正数占比"""
+        """获取当前正数占比和历史最高值"""
         try:
             response = requests.get(API_URL, timeout=10)
             response.raise_for_status()
@@ -102,16 +129,25 @@ class PositiveRatioMonitor:
             if data.get('success'):
                 stats = data.get('stats', {})
                 ratio = stats.get('positive_ratio')
+                max_ratio_from_api = stats.get('max_positive_ratio')  # 从API获取当日最高值
                 
                 if ratio is not None:
                     logger.info(f"✅ 获取正数占比成功: {ratio:.2f}%")
-                    return {
+                    
+                    result = {
                         'ratio': ratio,
                         'positive_count': stats.get('positive_count', 0),
                         'total_count': stats.get('total_count', 0),
                         'date': stats.get('date'),
                         'positive_duration': stats.get('positive_duration', 0)
                     }
+                    
+                    # 如果API返回了最高值，使用API的值
+                    if max_ratio_from_api is not None:
+                        result['max_ratio'] = max_ratio_from_api
+                        logger.info(f"📊 API返回最高值: {max_ratio_from_api:.2f}%")
+                    
+                    return result
                 else:
                     logger.warning("⚠️ API返回数据中没有positive_ratio字段")
                     return None
@@ -123,29 +159,37 @@ class PositiveRatioMonitor:
             logger.error(f"❌ 获取正数占比失败: {e}")
             return None
     
-    def send_telegram(self, message):
-        """发送Telegram消息"""
+    def send_telegram(self, message, repeat=1):
+        """发送Telegram消息（可重复发送）"""
         if not TG_BOT_TOKEN or not TG_CHAT_ID:
             logger.warning("⚠️ Telegram配置未设置，跳过发送")
             return False
         
-        try:
-            url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
-            data = {
-                'chat_id': TG_CHAT_ID,
-                'text': message,
-                'parse_mode': 'HTML'
-            }
-            
-            response = requests.post(url, data=data, timeout=10)
-            response.raise_for_status()
-            
-            logger.info("✅ Telegram消息发送成功")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Telegram消息发送失败: {e}")
-            return False
+        success_count = 0
+        
+        for i in range(repeat):
+            try:
+                url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
+                data = {
+                    'chat_id': TG_CHAT_ID,
+                    'text': message,
+                    'parse_mode': 'HTML'
+                }
+                
+                response = requests.post(url, data=data, timeout=10)
+                response.raise_for_status()
+                
+                success_count += 1
+                logger.info(f"✅ Telegram消息发送成功 ({i+1}/{repeat})")
+                
+                # 发送间隔，避免频率限制
+                if i < repeat - 1:
+                    time.sleep(1)
+                
+            except Exception as e:
+                logger.error(f"❌ Telegram消息发送失败 ({i+1}/{repeat}): {e}")
+        
+        return success_count > 0
     
     def check_and_alert(self):
         """检查并发送报警"""
@@ -156,12 +200,31 @@ class PositiveRatioMonitor:
             return
         
         current_ratio = current_data['ratio']
-        current_status = 'bullish' if current_ratio >= THRESHOLD else 'bearish'
+        
+        # 获取今日最高正数占比（从历史数据中计算）
+        max_ratio = self.get_today_max_ratio()
+        
+        if max_ratio is None:
+            # 如果无法从历史数据获取，回退到本地状态
+            max_ratio = self.state.get('max_ratio')
+            if max_ratio is None or current_ratio > max_ratio:
+                max_ratio = current_ratio
+                self.state['max_ratio'] = max_ratio
+                logger.info(f"📈 更新最高正数占比: {max_ratio:.2f}% (本地计算)")
+        else:
+            # 使用从历史数据获取的最高值
+            self.state['max_ratio'] = max_ratio
+        
+        # 计算动态阈值：最高值 - 20%
+        threshold = max_ratio - THRESHOLD_OFFSET
+        self.state['threshold'] = threshold
+        
+        current_status = 'bullish' if current_ratio >= threshold else 'bearish'
         
         beijing_time = datetime.now(timezone(timedelta(hours=8)))
         check_time = beijing_time.strftime('%Y-%m-%d %H:%M:%S')
         
-        logger.info(f"📊 当前正数占比: {current_ratio:.2f}% | 状态: {current_status} | 阈值: {THRESHOLD}%")
+        logger.info(f"📊 当前正数占比: {current_ratio:.2f}% | 最高值: {max_ratio:.2f}% | 阈值: {threshold:.2f}% | 状态: {current_status}")
         
         # 获取上次状态
         last_ratio = self.state.get('last_ratio')
@@ -172,30 +235,30 @@ class PositiveRatioMonitor:
         alert_type = None
         
         if last_ratio is not None and last_status is not None:
-            # 转多信号：从<40%上升到>=40%
+            # 空转多信号：从<阈值上升到>=阈值
             if last_status == 'bearish' and current_status == 'bullish':
                 should_alert = True
                 alert_type = 'turn_bullish'
-                logger.warning(f"🔥 检测到转多信号！{last_ratio:.2f}% → {current_ratio:.2f}%")
+                logger.warning(f"🔥 检测到空转多信号！{last_ratio:.2f}% → {current_ratio:.2f}% (阈值: {threshold:.2f}%)")
             
-            # 转空信号：从>=40%下降到<40%
+            # 多转空信号：从>=阈值下降到<阈值
             elif last_status == 'bullish' and current_status == 'bearish':
                 should_alert = True
                 alert_type = 'turn_bearish'
-                logger.warning(f"🔥 检测到转空信号！{last_ratio:.2f}% → {current_ratio:.2f}%")
+                logger.warning(f"🔥 检测到多转空信号！{last_ratio:.2f}% → {current_ratio:.2f}% (阈值: {threshold:.2f}%)")
         
         # 发送报警
         if should_alert:
             if alert_type == 'turn_bullish':
                 emoji = "🟢"
-                title = "转多信号"
+                title = "空转多信号"
                 direction = "上升"
                 action = "逢低做多"
                 color_from = "🔴 空方"
                 color_to = "🟢 多方"
             else:  # turn_bearish
                 emoji = "🔴"
-                title = "转空信号"
+                title = "多转空信号"
                 direction = "下降"
                 action = "逢高做空"
                 color_from = "🟢 多方"
@@ -212,7 +275,7 @@ class PositiveRatioMonitor:
 📉 方向: {direction}
 🔀 状态转换: {color_from} → {color_to}
 
-⚡ <b>阈值: {THRESHOLD}%</b>
+⚡ <b>动态阈值: {threshold:.2f}% (最高值 {max_ratio:.2f}% - 20%)</b>
 ━━━━━━━━━━━━━━━━━━
 
 💡 <b>操作建议: {action}</b>
@@ -225,8 +288,8 @@ class PositiveRatioMonitor:
 ⏰ 检查时间: {check_time}
 """
             
-            # 发送Telegram通知
-            self.send_telegram(message)
+            # 🔥 发送Telegram通知（重复3次）
+            self.send_telegram(message, repeat=REPEAT_COUNT)
             
             # 保存报警记录
             alert_record = {
@@ -236,7 +299,8 @@ class PositiveRatioMonitor:
                 'to_ratio': current_ratio,
                 'from_status': last_status,
                 'to_status': current_status,
-                'threshold': THRESHOLD,
+                'threshold': threshold,
+                'max_ratio': max_ratio,
                 'data': current_data
             }
             self.save_alert_history(alert_record)
@@ -255,10 +319,11 @@ class PositiveRatioMonitor:
         logger.info("🚀 正数占比多空转换监控系统启动")
         logger.info("=" * 60)
         logger.info(f"⚙️  配置参数:")
-        logger.info(f"   - 多空分界线: {THRESHOLD}%")
+        logger.info(f"   - 多空分界线: 动态计算（最高值 - {THRESHOLD_OFFSET}%）")
         logger.info(f"   - 检查间隔: {CHECK_INTERVAL}秒")
         logger.info(f"   - API地址: {API_URL}")
         logger.info(f"   - 数据目录: {DATA_DIR}")
+        logger.info(f"   - Telegram消息重复次数: {REPEAT_COUNT}次")
         logger.info(f"   - Telegram Bot: {'✅ 已配置' if TG_BOT_TOKEN else '❌ 未配置'}")
         logger.info("=" * 60)
         
@@ -267,7 +332,21 @@ class PositiveRatioMonitor:
         current_data = self.get_current_ratio()
         if current_data:
             current_ratio = current_data['ratio']
-            current_status = 'bullish' if current_ratio >= THRESHOLD else 'bearish'
+            
+            # 从历史数据获取今日最高值
+            max_ratio = self.get_today_max_ratio()
+            
+            if max_ratio is None:
+                # 如果无法从历史数据获取，使用当前值
+                max_ratio = current_ratio
+                logger.warning(f"⚠️ 无法从历史数据获取最高值，使用当前值: {max_ratio:.2f}%")
+            
+            threshold = max_ratio - THRESHOLD_OFFSET
+            
+            self.state['max_ratio'] = max_ratio
+            self.state['threshold'] = threshold
+            
+            current_status = 'bullish' if current_ratio >= threshold else 'bearish'
             beijing_time = datetime.now(timezone(timedelta(hours=8)))
             
             self.state['last_ratio'] = current_ratio
@@ -275,7 +354,7 @@ class PositiveRatioMonitor:
             self.state['last_check_time'] = beijing_time.strftime('%Y-%m-%d %H:%M:%S')
             self.save_state()
             
-            logger.info(f"✅ 初始状态: {current_ratio:.2f}% ({current_status})")
+            logger.info(f"✅ 初始状态: 正数占比 {current_ratio:.2f}%, 最高值 {max_ratio:.2f}%, 阈值 {threshold:.2f}%, 状态 {current_status}")
         
         check_count = 0
         
