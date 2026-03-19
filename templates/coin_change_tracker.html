@@ -7779,7 +7779,8 @@ pm2 status                                                # 查看所有进程�
                     // 更新最高涨速
                     const maxVel = stats.max;
                     const maxVelEl = document.getElementById('maxVelocity');
-                    maxVelEl.textContent = `+${maxVel.toFixed(2)}%`;
+                    maxVelEl.textContent = `${maxVel > 0 ? '+' : ''}${maxVel.toFixed(2)}%`;
+                    maxVelEl.className = `text-3xl font-bold ${maxVel > 0 ? 'text-green-600' : 'text-red-600'}`;
                     
                     // 🔥 更新最高涨速时间
                     if (stats.max_time) {
@@ -7791,6 +7792,7 @@ pm2 status                                                # 查看所有进程�
                     const minVel = stats.min;
                     const minVelEl = document.getElementById('minVelocity');
                     minVelEl.textContent = `${minVel > 0 ? '+' : ''}${minVel.toFixed(2)}%`;
+                    minVelEl.className = `text-3xl font-bold ${minVel > 0 ? 'text-green-600' : 'text-red-600'}`;
                     
                     // 🔥 更新最低涨速时间
                     if (stats.min_time) {
