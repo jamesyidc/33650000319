@@ -11545,11 +11545,19 @@ pm2 status                                                # 查看所有进程�
             }
             
             // 计算BTC日内位置百分比（从日内高低价计算）
+            console.log('📊 BTC数据:', { 
+                high: btcData.high_price, 
+                low: btcData.low_price, 
+                current: btcData.current_price 
+            });
+            
             if (btcData.high_price !== undefined && btcData.low_price !== undefined && 
                 btcData.current_price !== undefined) {
                 const range = btcData.high_price - btcData.low_price;
+                console.log('📊 BTC range:', range);
                 if (range > 0) {
                     const position = ((btcData.current_price - btcData.low_price) / range) * 100;
+                    console.log('📊 BTC position calculated:', position.toFixed(2) + '%');
                     document.getElementById('btcPosition').textContent = `${position.toFixed(2)}%`;
                     
                     // 根据位置设置颜色
@@ -11566,10 +11574,12 @@ pm2 status                                                # 查看所有进程�
                         posEl.className = 'text-sm font-bold text-red-600';
                     }
                 } else {
+                    console.log('⚠️ BTC range is 0');
                     document.getElementById('btcPosition').textContent = '--';
                     document.getElementById('btcPosition').className = 'text-sm font-bold text-gray-400';
                 }
             } else {
+                console.log('⚠️ BTC high/low/current price missing');
                 document.getElementById('btcPosition').textContent = '--';
                 document.getElementById('btcPosition').className = 'text-sm font-bold text-gray-400';
             }
@@ -11659,11 +11669,19 @@ pm2 status                                                # 查看所有进程�
             }
             
             // 计算ETH日内位置百分比（从日内高低价计算）
+            console.log('📊 ETH数据:', { 
+                high: ethData.high_price, 
+                low: ethData.low_price, 
+                current: ethData.current_price 
+            });
+            
             if (ethData.high_price !== undefined && ethData.low_price !== undefined && 
                 ethData.current_price !== undefined) {
                 const range = ethData.high_price - ethData.low_price;
+                console.log('📊 ETH range:', range);
                 if (range > 0) {
                     const position = ((ethData.current_price - ethData.low_price) / range) * 100;
+                    console.log('📊 ETH position calculated:', position.toFixed(2) + '%');
                     document.getElementById('ethPosition').textContent = `${position.toFixed(2)}%`;
                     
                     // 根据位置设置颜色
@@ -11680,10 +11698,12 @@ pm2 status                                                # 查看所有进程�
                         posEl.className = 'text-sm font-bold text-red-600';
                     }
                 } else {
+                    console.log('⚠️ ETH range is 0');
                     document.getElementById('ethPosition').textContent = '--';
                     document.getElementById('ethPosition').className = 'text-sm font-bold text-gray-400';
                 }
             } else {
+                console.log('⚠️ ETH high/low/current price missing');
                 document.getElementById('ethPosition').textContent = '--';
                 document.getElementById('ethPosition').className = 'text-sm font-bold text-gray-400';
             }
