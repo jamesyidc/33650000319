@@ -2417,6 +2417,158 @@ def abc_position_close_all():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+# ==================== 跟单系统 API ====================
+
+@app.route('/abc-position/api/copy-trading/config/<account_id>', methods=['GET', 'POST'])
+def copy_trading_config(account_id):
+    """获取/更新跟单配置"""
+    config_file = Path('/home/user/webapp/data/copy_trading') / f'copy_config_{account_id}.jsonl'
+    
+    if request.method == 'GET':
+        # 获取配置
+        try:
+            if not config_file.exists():
+                return jsonify({'success': False, 'error': '配置文件不存在'})
+            
+            with open(config_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    config = json.loads(lines[-1].strip())
+                    return jsonify({'success': True, 'config': config})
+                else:
+                    return jsonify({'success': False, 'error': '配置为空'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
+    
+    elif request.method == 'POST':
+        # 更新配置
+        try:
+            data = request.json
+            
+            # 验证账户ID
+            if account_id not in ['A', 'B', 'C', 'D']:
+                return jsonify({'success': False, 'error': '无效的账户ID'})
+            
+            # 验证目标账户
+            target_account = data.get('target_account', '')
+            if target_account and target_account == account_id:
+                return jsonify({'success': False, 'error': '不能跟踪自己'})
+            
+            # 构建配置对象
+            config = {
+                'enabled': data.get('enabled', False),
+                'follower_account': account_id,
+                'target_account': target_account,
+                'trigger_type': data.get('trigger_type', 'profit'),
+                'trigger_percent': float(data.get('trigger_percent', 0)),
+                'strategy_type': data.get('strategy_type', 'manual'),
+                'position_side': data.get('position_side', 'long'),
+                'cost': float(data.get('cost', 10)),
+                'leverage': int(data.get('leverage', 50)),
+                'symbol': data.get('symbol', 'ETH-USDT-SWAP'),
+                'executed': data.get('executed', False),
+                'last_check': data.get('last_check', ''),
+                'last_trigger': data.get('last_trigger', ''),
+                'updated_at': datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).isoformat()
+            }
+            
+            # 保存配置
+            with open(config_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(config, ensure_ascii=False) + '\n')
+            
+            return jsonify({'success': True, 'message': '配置已更新', 'config': config})
+        
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e), 'traceback': traceback.format_exc()})
+
+
+@app.route('/abc-position/api/copy-trading/status', methods=['GET'])
+def copy_trading_status():
+    """获取所有账户的跟单状态"""
+    try:
+        config_dir = Path('/home/user/webapp/data/copy_trading')
+        statuses = {}
+        
+        for account_id in ['A', 'B', 'C', 'D']:
+            config_file = config_dir / f'copy_config_{account_id}.jsonl'
+            
+            if config_file.exists():
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    if lines:
+                        config = json.loads(lines[-1].strip())
+                        statuses[account_id] = config
+        
+        return jsonify({'success': True, 'statuses': statuses})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/abc-position/api/copy-trading/reset/<account_id>', methods=['POST'])
+def copy_trading_reset(account_id):
+    """重置跟单执行状态（允许再次执行）"""
+    try:
+        if account_id not in ['A', 'B', 'C', 'D']:
+            return jsonify({'success': False, 'error': '无效的账户ID'})
+        
+        config_file = Path('/home/user/webapp/data/copy_trading') / f'copy_config_{account_id}.jsonl'
+        
+        if not config_file.exists():
+            return jsonify({'success': False, 'error': '配置文件不存在'})
+        
+        # 读取当前配置
+        with open(config_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if lines:
+                config = json.loads(lines[-1].strip())
+            else:
+                return jsonify({'success': False, 'error': '配置为空'})
+        
+        # 重置执行状态
+        config['executed'] = False
+        config['last_trigger'] = ''
+        config['updated_at'] = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).isoformat()
+        
+        # 保存
+        with open(config_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(config, ensure_ascii=False) + '\n')
+        
+        return jsonify({'success': True, 'message': '执行状态已重置', 'config': config})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/abc-position/api/copy-trading/history/<account_id>', methods=['GET'])
+def copy_trading_history(account_id):
+    """获取跟单历史记录"""
+    try:
+        if account_id not in ['A', 'B', 'C', 'D']:
+            return jsonify({'success': False, 'error': '无效的账户ID'})
+        
+        config_file = Path('/home/user/webapp/data/copy_trading') / f'copy_config_{account_id}.jsonl'
+        
+        if not config_file.exists():
+            return jsonify({'success': False, 'error': '配置文件不存在'})
+        
+        # 读取所有历史记录
+        history = []
+        with open(config_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    history.append(json.loads(line.strip()))
+        
+        # 反转顺序，最新的在前
+        history.reverse()
+        
+        return jsonify({'success': True, 'history': history, 'count': len(history)})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+
 @app.route('/api/server-date')
 def api_server_date():
     """获取服务器当前日期（北京时间）"""
