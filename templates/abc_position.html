@@ -1935,16 +1935,16 @@ def get_position_color(account_id, total_cost):
         
         <!-- 行情预测 (来自币种变化追踪系统) -->
         <div class="permission-panel" style="margin-top: 20px;">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <h2 class="text-xl font-bold flex items-center" style="color: #667eea;">
-                        <i class="fas fa-crystal-ball mr-2" style="color: #667eea;"></i>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h2 style="color: #667eea; font-size: 1.3em; font-weight: bold; margin: 0; display: flex; align-items: center; border: none !important; padding-bottom: 0 !important;">
+                        <i class="fas fa-crystal-ball" style="color: #667eea; margin-right: 8px;"></i>
                         🔮 行情预测 (0-2点分析)
                     </h2>
-                    <span id="predictionDateBadge" class="px-3 py-1 text-white text-sm font-semibold rounded-full" style="background: #667eea;">--</span>
+                    <span id="predictionDateBadge" style="background: #667eea; color: white; padding: 6px 12px; font-size: 0.9em; font-weight: 600; border-radius: 20px;">--</span>
                 </div>
-                <button onclick="refreshPrediction()" class="inline-flex items-center px-3 py-1.5 text-white text-sm rounded-lg transition-all duration-200 shadow-md hover:shadow-lg" style="background: #667eea;">
-                    <i class="fas fa-sync-alt mr-1"></i>
+                <button onclick="refreshPrediction()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #667eea; color: white; font-size: 0.9em; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-sync-alt"></i>
                     刷新预测
                 </button>
             </div>
@@ -2313,16 +2313,21 @@ def get_position_color(account_id, total_cost):
         // 加载状态
         // 加载今日预测
         async function loadPrediction() {
+            console.log('📊 开始加载预测数据...');
             try {
                 const response = await fetch('/abc-position/api/daily-prediction');
                 const data = await response.json();
+                console.log('📊 预测API响应:', data);
                 
                 if (data.success && data.prediction) {
                     const pred = data.prediction;
                     const colors = pred.color_counts || {};
+                    console.log('✅ 预测数据:', pred);
+                    console.log('✅ 颜色统计:', colors);
                     
                     // 更新日期徽章
                     document.getElementById('predictionDateBadge').textContent = pred.date || '--';
+                    console.log('✅ 已更新日期徽章');
                     
                     // 更新颜色统计
                     document.getElementById('predictionGreenCount').textContent = colors.green || 0;
