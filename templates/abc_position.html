@@ -984,6 +984,8 @@
             <div id="currentDateDisplay" style="margin-top: 10px; padding: 10px; background: rgba(102,126,234,0.1); border-radius: 8px; font-size: 0.95em; color: #667eea; text-align: center;">
                 📅 加载中...
             </div>
+            </div>
+        </div>
         </div>
         
         <!-- 系统文档面板 -->
@@ -1905,34 +1907,6 @@ def get_position_color(account_id, total_cost):
             </div>
         </div>
         
-        <!-- 开单权限控制面板 -->
-        <div class="permission-panel">
-            <h2>📋 开单权限控制</h2>
-            
-            <div class="permission-status">
-                <div>
-                    <strong>状态：</strong>
-                    <span class="status-badge" id="permissionStatus">加载中...</span>
-                </div>
-                <div>
-                    <strong>允许方向：</strong>
-                    <span class="direction-badge" id="permissionDirection">加载中...</span>
-                </div>
-                <div>
-                    <strong>当前持仓：</strong>
-                    <span class="direction-badge" id="currentDirection">加载中...</span>
-                </div>
-            </div>
-            
-            <div class="permission-controls">
-                <button class="btn btn-success" onclick="setPermission(true, 'long')">✅ 允许开多单</button>
-                <button class="btn btn-warning" onclick="setPermission(true, 'short')">✅ 允许开空单</button>
-                <button class="btn btn-primary" onclick="setPermission(true, 'both')">✅ 允许双向</button>
-                <button class="btn btn-danger" onclick="setPermission(false, 'none')">🚫 禁止开单</button>
-                <button class="btn btn-secondary" onclick="resetPositions()">🔄 重置所有仓位</button>
-            </div>
-        </div>
-        
         <!-- 行情预测 (来自币种变化追踪系统) -->
         <div class="permission-panel" style="margin-top: 20px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
@@ -2037,8 +2011,34 @@ def get_position_color(account_id, total_cost):
                     情况3: 只有红色 → 做空 |
                     情况4: 全部绿色 → 诱多不参与
                 </div>
+        <!-- 开单权限控制面板 -->
+        <div class="permission-panel">
+            <h2>📋 开单权限控制</h2>
+            
+            <div class="permission-status">
+                <div>
+                    <strong>状态：</strong>
+                    <span class="status-badge" id="permissionStatus">加载中...</span>
+                </div>
+                <div>
+                    <strong>允许方向：</strong>
+                    <span class="direction-badge" id="permissionDirection">加载中...</span>
+                </div>
+                <div>
+                    <strong>当前持仓：</strong>
+                    <span class="direction-badge" id="currentDirection">加载中...</span>
+                </div>
+            </div>
+            
+            <div class="permission-controls">
+                <button class="btn btn-success" onclick="setPermission(true, 'long')">✅ 允许开多单</button>
+                <button class="btn btn-warning" onclick="setPermission(true, 'short')">✅ 允许开空单</button>
+                <button class="btn btn-primary" onclick="setPermission(true, 'both')">✅ 允许双向</button>
+                <button class="btn btn-danger" onclick="setPermission(false, 'none')">🚫 禁止开单</button>
+                <button class="btn btn-secondary" onclick="resetPositions()">🔄 重置所有仓位</button>
             </div>
         </div>
+        
         
         <!-- 账户卡片 -->
         <div class="accounts-grid" id="accountsGrid">
