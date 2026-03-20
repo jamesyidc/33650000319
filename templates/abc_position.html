@@ -4323,7 +4323,7 @@ def get_position_color(account_id, total_cost):
                 const data = await response.json();
                 
                 if (data.success) {
-                    const configs = data.data;
+                    const configs = data.statuses || data.data || {};
                     ['A', 'B', 'C', 'D'].forEach(accId => {
                         if (configs[accId]) {
                             const config = configs[accId];
