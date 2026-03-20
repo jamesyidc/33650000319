@@ -2040,6 +2040,305 @@ def get_position_color(account_id, total_cost):
         </div>
         
         
+        
+        <!-- 跟单系统 -->
+        <div class="permission-panel" style="margin-top: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="color: #667eea; font-size: 1.3em; font-weight: bold; margin: 0; display: flex; align-items: center; border: none !important; padding-bottom: 0 !important;">
+                    <i class="fas fa-copy" style="color: #667eea; margin-right: 8px;"></i>
+                    📋 跟单系统
+                </h2>
+                <button onclick="refreshCopyTradingStatus()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #667eea; color: white; font-size: 0.9em; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-sync-alt"></i>
+                    刷新状态
+                </button>
+            </div>
+            
+            <!-- 跟单配置网格 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                
+                <!-- 账户A跟单配置 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #667eea;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #667eea; font-size: 1.1em;">账户A - 主账户</h3>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="copyEnableA" onchange="saveCopyConfig('A')" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #374151;">启用</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">跟踪账户</label>
+                        <select id="copyTargetA" onchange="saveCopyConfig('A')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="">请选择</option>
+                            <option value="B">账户B - POIT</option>
+                            <option value="C">账户C - fangfang12</option>
+                            <option value="D">账户D - dadanini</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发类型</label>
+                            <select id="copyTriggerTypeA" onchange="saveCopyConfig('A')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                                <option value="profit">盈利</option>
+                                <option value="loss">亏损</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发百分比(%)</label>
+                            <input type="number" id="copyTriggerPercentA" value="5" min="0" max="100" step="0.1" onchange="saveCopyConfig('A')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">开仓策略</label>
+                        <select id="copyStrategyA" onchange="saveCopyConfig('A')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="manual">手动(ETH)</option>
+                            <option value="top_gainers_long">涨幅前8 - 多单</option>
+                            <option value="top_gainers_short">涨幅前8 - 空单</option>
+                            <option value="top_losers_long">涨幅后8 - 多单</option>
+                            <option value="top_losers_short">涨幅后8 - 空单</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">成本(USDT)</label>
+                            <input type="number" id="copyCostA" value="10" min="1" step="1" onchange="saveCopyConfig('A')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">杠杆倍数</label>
+                            <input type="number" id="copyLeverageA" value="50" min="1" max="125" step="1" onchange="saveCopyConfig('A')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="saveCopyConfig('A')" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                        <button onclick="resetCopyConfig('A')" style="flex: 1; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                    </div>
+                    
+                    <div id="copyStatusA" style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 6px; font-size: 0.85em; color: #6b7280; text-align: center;">
+                        等待配置...
+                    </div>
+                </div>
+                
+                <!-- 账户B跟单配置 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #10b981; font-size: 1.1em;">账户B - POIT</h3>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="copyEnableB" onchange="saveCopyConfig('B')" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #374151;">启用</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">跟踪账户</label>
+                        <select id="copyTargetB" onchange="saveCopyConfig('B')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="">请选择</option>
+                            <option value="A">账户A - 主账户</option>
+                            <option value="C">账户C - fangfang12</option>
+                            <option value="D">账户D - dadanini</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发类型</label>
+                            <select id="copyTriggerTypeB" onchange="saveCopyConfig('B')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                                <option value="profit">盈利</option>
+                                <option value="loss">亏损</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发百分比(%)</label>
+                            <input type="number" id="copyTriggerPercentB" value="5" min="0" max="100" step="0.1" onchange="saveCopyConfig('B')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">开仓策略</label>
+                        <select id="copyStrategyB" onchange="saveCopyConfig('B')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="manual">手动(ETH)</option>
+                            <option value="top_gainers_long">涨幅前8 - 多单</option>
+                            <option value="top_gainers_short">涨幅前8 - 空单</option>
+                            <option value="top_losers_long">涨幅后8 - 多单</option>
+                            <option value="top_losers_short">涨幅后8 - 空单</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">成本(USDT)</label>
+                            <input type="number" id="copyCostB" value="10" min="1" step="1" onchange="saveCopyConfig('B')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">杠杆倍数</label>
+                            <input type="number" id="copyLeverageB" value="50" min="1" max="125" step="1" onchange="saveCopyConfig('B')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="saveCopyConfig('B')" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                        <button onclick="resetCopyConfig('B')" style="flex: 1; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                    </div>
+                    
+                    <div id="copyStatusB" style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 6px; font-size: 0.85em; color: #6b7280; text-align: center;">
+                        等待配置...
+                    </div>
+                </div>
+                
+                <!-- 账户C跟单配置 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #f59e0b;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #f59e0b; font-size: 1.1em;">账户C - fangfang12</h3>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="copyEnableC" onchange="saveCopyConfig('C')" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #374151;">启用</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">跟踪账户</label>
+                        <select id="copyTargetC" onchange="saveCopyConfig('C')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="">请选择</option>
+                            <option value="A">账户A - 主账户</option>
+                            <option value="B">账户B - POIT</option>
+                            <option value="D">账户D - dadanini</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发类型</label>
+                            <select id="copyTriggerTypeC" onchange="saveCopyConfig('C')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                                <option value="profit">盈利</option>
+                                <option value="loss">亏损</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发百分比(%)</label>
+                            <input type="number" id="copyTriggerPercentC" value="5" min="0" max="100" step="0.1" onchange="saveCopyConfig('C')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">开仓策略</label>
+                        <select id="copyStrategyC" onchange="saveCopyConfig('C')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="manual">手动(ETH)</option>
+                            <option value="top_gainers_long">涨幅前8 - 多单</option>
+                            <option value="top_gainers_short">涨幅前8 - 空单</option>
+                            <option value="top_losers_long">涨幅后8 - 多单</option>
+                            <option value="top_losers_short">涨幅后8 - 空单</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">成本(USDT)</label>
+                            <input type="number" id="copyCostC" value="10" min="1" step="1" onchange="saveCopyConfig('C')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">杠杆倍数</label>
+                            <input type="number" id="copyLeverageC" value="50" min="1" max="125" step="1" onchange="saveCopyConfig('C')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="saveCopyConfig('C')" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                        <button onclick="resetCopyConfig('C')" style="flex: 1; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                    </div>
+                    
+                    <div id="copyStatusC" style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 6px; font-size: 0.85em; color: #6b7280; text-align: center;">
+                        等待配置...
+                    </div>
+                </div>
+                
+                <!-- 账户D跟单配置 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #ef4444;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #ef4444; font-size: 1.1em;">账户D - dadanini</h3>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="copyEnableD" onchange="saveCopyConfig('D')" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #374151;">启用</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">跟踪账户</label>
+                        <select id="copyTargetD" onchange="saveCopyConfig('D')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="">请选择</option>
+                            <option value="A">账户A - 主账户</option>
+                            <option value="B">账户B - POIT</option>
+                            <option value="C">账户C - fangfang12</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发类型</label>
+                            <select id="copyTriggerTypeD" onchange="saveCopyConfig('D')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                                <option value="profit">盈利</option>
+                                <option value="loss">亏损</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">触发百分比(%)</label>
+                            <input type="number" id="copyTriggerPercentD" value="5" min="0" max="100" step="0.1" onchange="saveCopyConfig('D')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">开仓策略</label>
+                        <select id="copyStrategyD" onchange="saveCopyConfig('D')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                            <option value="manual">手动(ETH)</option>
+                            <option value="top_gainers_long">涨幅前8 - 多单</option>
+                            <option value="top_gainers_short">涨幅前8 - 空单</option>
+                            <option value="top_losers_long">涨幅后8 - 多单</option>
+                            <option value="top_losers_short">涨幅后8 - 空单</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">成本(USDT)</label>
+                            <input type="number" id="copyCostD" value="10" min="1" step="1" onchange="saveCopyConfig('D')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #6b7280; font-size: 0.9em;">杠杆倍数</label>
+                            <input type="number" id="copyLeverageD" value="50" min="1" max="125" step="1" onchange="saveCopyConfig('D')" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.95em;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="saveCopyConfig('D')" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                        <button onclick="resetCopyConfig('D')" style="flex: 1; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                    </div>
+                    
+                    <div id="copyStatusD" style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 6px; font-size: 0.85em; color: #6b7280; text-align: center;">
+                        等待配置...
+                    </div>
+                </div>
+                
+            </div>
+        </div>
         <!-- 账户卡片 -->
         <div class="accounts-grid" id="accountsGrid">
             <div class="loading">加载账户数据中...</div>
@@ -3949,6 +4248,7 @@ def get_position_color(account_id, total_cost):
             await loadPositionSettings();  // ✅ 先加载仓位设置（等待完成）
             loadStrategies();  // 🎯 加载账户策略
             loadPrediction();  // 📊 加载今日预测
+            loadCopyTradingConfigs();  // 📋 加载跟单配置
             loadState();
             loadTodayChart();  // 默认加载今天的数据
             loadTriggerHistory();
@@ -4013,6 +4313,176 @@ def get_position_color(account_id, total_cost):
                 }
             });
         });
+
+        // ========== 跟单系统函数 ==========
+        
+        // 加载跟单配置
+        async function loadCopyTradingConfigs() {
+            try {
+                const response = await fetch('/abc-position/api/copy-trading/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const configs = data.data;
+                    ['A', 'B', 'C', 'D'].forEach(accId => {
+                        if (configs[accId]) {
+                            const config = configs[accId];
+                            document.getElementById(`copyEnable${accId}`).checked = config.enabled;
+                            document.getElementById(`copyTarget${accId}`).value = config.target_account || '';
+                            document.getElementById(`copyTriggerType${accId}`).value = config.trigger_type;
+                            document.getElementById(`copyTriggerPercent${accId}`).value = config.trigger_percent;
+                            document.getElementById(`copyStrategy${accId}`).value = config.strategy_type;
+                            document.getElementById(`copyCost${accId}`).value = config.cost;
+                            document.getElementById(`copyLeverage${accId}`).value = config.leverage;
+                            
+                            // 更新状态显示
+                            updateCopyStatus(accId, config);
+                        }
+                    });
+                    console.log('✅ 跟单配置已加载:', configs);
+                }
+            } catch (error) {
+                console.error('加载跟单配置失败:', error);
+            }
+        }
+        
+        // 保存跟单配置
+        async function saveCopyConfig(accId) {
+            const config = {
+                enabled: document.getElementById(`copyEnable${accId}`).checked,
+                target_account: document.getElementById(`copyTarget${accId}`).value,
+                trigger_type: document.getElementById(`copyTriggerType${accId}`).value,
+                trigger_percent: parseFloat(document.getElementById(`copyTriggerPercent${accId}`).value),
+                strategy_type: document.getElementById(`copyStrategy${accId}`).value,
+                position_side: document.getElementById(`copyStrategy${accId}`).value.includes('short') ? 'short' : 'long',
+                cost: parseFloat(document.getElementById(`copyCost${accId}`).value),
+                leverage: parseInt(document.getElementById(`copyLeverage${accId}`).value),
+                symbol: 'ETH-USDT-SWAP'
+            };
+            
+            // 验证：不能跟踪自己
+            if (config.target_account === accId) {
+                alert('❌ 不能跟踪自己的账户！');
+                document.getElementById(`copyTarget${accId}`).value = '';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/abc-position/api/copy-trading/config/${accId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`✅ 账户${accId}跟单配置已保存`);
+                    updateCopyStatus(accId, config);
+                    console.log(`✅ 账户${accId}配置已保存:`, config);
+                } else {
+                    alert(`❌ 保存失败: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('保存跟单配置失败:', error);
+                alert('❌ 保存失败，请检查网络连接');
+            }
+        }
+        
+        // 重置跟单配置
+        async function resetCopyConfig(accId) {
+            if (!confirm(`确定要重置账户${accId}的跟单配置吗？`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/abc-position/api/copy-trading/reset/${accId}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`✅ 账户${accId}跟单配置已重置`);
+                    loadCopyTradingConfigs();
+                } else {
+                    alert(`❌ 重置失败: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('重置跟单配置失败:', error);
+                alert('❌ 重置失败，请检查网络连接');
+            }
+        }
+        
+        // 更新跟单状态显示
+        function updateCopyStatus(accId, config) {
+            const statusEl = document.getElementById(`copyStatus${accId}`);
+            if (!statusEl) return;
+            
+            if (!config.enabled) {
+                statusEl.innerHTML = '<span style="color: #9ca3af;">⚪ 未启用</span>';
+                statusEl.style.background = '#f3f4f6';
+                return;
+            }
+            
+            if (!config.target_account) {
+                statusEl.innerHTML = '<span style="color: #f59e0b;">⚠️ 请选择跟踪账户</span>';
+                statusEl.style.background = '#fef3c7';
+                return;
+            }
+            
+            const targetName = {
+                'A': '主账户',
+                'B': 'POIT',
+                'C': 'fangfang12',
+                'D': 'dadanini'
+            }[config.target_account];
+            
+            const triggerText = config.trigger_type === 'profit' ? '盈利' : '亏损';
+            const executedText = config.executed ? '✅ 已执行' : '⏳ 待触发';
+            
+            statusEl.innerHTML = `
+                <div style="text-align: left;">
+                    <div style="margin-bottom: 4px;">
+                        <strong style="color: #667eea;">跟踪: </strong>
+                        <span>账户${config.target_account} (${targetName})</span>
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <strong style="color: #667eea;">触发: </strong>
+                        <span>${triggerText} ≥ ${config.trigger_percent}%</span>
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <strong style="color: #667eea;">策略: </strong>
+                        <span>${getStrategyName(config.strategy_type)}</span>
+                    </div>
+                    <div>
+                        <strong style="color: #667eea;">状态: </strong>
+                        <span style="color: ${config.executed ? '#10b981' : '#f59e0b'};">${executedText}</span>
+                    </div>
+                </div>
+            `;
+            statusEl.style.background = config.executed ? '#d1fae5' : '#fef3c7';
+        }
+        
+        // 获取策略名称
+        function getStrategyName(strategyType) {
+            const names = {
+                'manual': '手动(ETH)',
+                'top_gainers_long': '涨幅前8-多',
+                'top_gainers_short': '涨幅前8-空',
+                'top_losers_long': '涨幅后8-多',
+                'top_losers_short': '涨幅后8-空'
+            };
+            return names[strategyType] || strategyType;
+        }
+        
+        // 刷新跟单状态
+        function refreshCopyTradingStatus() {
+            loadCopyTradingConfigs();
+            showToast('正在刷新跟单状态...');
+        }
+        
+
     </script>
     
     <!-- 页面版本信息 -->
