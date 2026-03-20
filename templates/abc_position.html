@@ -2295,8 +2295,8 @@ def get_position_color(account_id, total_cost):
     </div>
     
     <script>
-        // 初始化ECharts实例
-        const chart = echarts.init(document.getElementById('pnlChart'));
+        // 初始化ECharts实例（将在DOMContentLoaded时初始化）
+        let chart = null;
         
         // 当前状态
         let currentState = null;
@@ -2701,6 +2701,12 @@ def get_position_color(account_id, total_cost):
         
         // 更新图表
         function updateChart() {
+            // 🔍 检查图表是否已初始化
+            if (!chart) {
+                console.warn('⚠️ 图表尚未初始化，跳过更新');
+                return;
+            }
+            
             if (historyData.length === 0) {
                 chart.clear();
                 return;
@@ -3914,6 +3920,10 @@ def get_position_color(account_id, total_cost):
         let lastRefreshDate = null;
         
         document.addEventListener('DOMContentLoaded', async function() {
+            // 🎨 初始化ECharts实例
+            chart = echarts.init(document.getElementById('pnlChart'));
+            console.log('✅ ECharts图表已初始化');
+            
             // 设置日期选择器默认为北京时间的今天
             const todayBeijing = getBeijingDateString();
             document.getElementById('chartDate').value = todayBeijing;
@@ -3993,7 +4003,9 @@ def get_position_color(account_id, total_cost):
             
             // 窗口大小变化时重绘图表
             window.addEventListener('resize', () => {
-                chart.resize();
+                if (chart) {
+                    chart.resize();
+                }
             });
         });
     </script>
