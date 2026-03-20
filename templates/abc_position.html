@@ -2088,6 +2088,12 @@ def get_position_color(account_id, total_cost):
                     <button onclick="loadChartByDate()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
                         🔍 查询
                     </button>
+                    <button onclick="loadPreviousDay()" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        ⬅️ 前一天
+                    </button>
+                    <button onclick="loadNextDay()" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        ➡️ 后一天
+                    </button>
                     <button onclick="loadTodayChart()" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
                         📆 今天
                     </button>
@@ -3836,6 +3842,42 @@ def get_position_color(account_id, total_cost):
             // 使用北京时间日期，确保与自动切换逻辑一致
             const todayBeijing = getBeijingDateString();
             document.getElementById('chartDate').value = todayBeijing;
+            loadChartByDate();
+        }
+        
+        // 加载前一天的图表
+        async function loadPreviousDay() {
+            const currentDate = document.getElementById('chartDate').value;
+            if (!currentDate) {
+                alert('请先选择一个日期');
+                return;
+            }
+            
+            // 将当前日期减1天
+            const date = new Date(currentDate);
+            date.setDate(date.getDate() - 1);
+            
+            // 格式化为 YYYY-MM-DD
+            const previousDate = date.toISOString().split('T')[0];
+            document.getElementById('chartDate').value = previousDate;
+            loadChartByDate();
+        }
+        
+        // 加载后一天的图表
+        async function loadNextDay() {
+            const currentDate = document.getElementById('chartDate').value;
+            if (!currentDate) {
+                alert('请先选择一个日期');
+                return;
+            }
+            
+            // 将当前日期加1天
+            const date = new Date(currentDate);
+            date.setDate(date.getDate() + 1);
+            
+            // 格式化为 YYYY-MM-DD
+            const nextDate = date.toISOString().split('T')[0];
+            document.getElementById('chartDate').value = nextDate;
             loadChartByDate();
         }
         
