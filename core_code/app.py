@@ -34311,6 +34311,147 @@ def backup_manager():
     return render_template('backup_manager.html')
 
 
+# ========== BTC & ETH 成交量监控 API ==========
+
+@app.route('/api/volume-monitor/status', methods=['GET'])
+def volume_monitor_status():
+    """获取成交量监控状态"""
+    try:
+        import requests
+        
+        # 读取配置和状态
+        config_file = Path('data/volume_monitor/volume_thresholds.json')
+        state_file = Path('data/volume_monitor/volume_state.json')
+        
+        # 默认配置
+        config = {
+            'BTC-USDT-SWAP': {'enabled': True, 'threshold': 10_000_000_000, 'name': 'BTC永续'},
+            'ETH-USDT-SWAP': {'enabled': True, 'threshold': 5_000_000_000, 'name': 'ETH永续'}
+        }
+        
+        # 加载配置
+        if config_file.exists():
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 获取实时数据
+        def get_volume(symbol):
+            url = 'https://www.okx.com/api/v5/market/candles'
+            params = {'instId': symbol, 'bar': '5m', 'limit': 1}
+            try:
+                response = requests.get(url, params=params, timeout=10)
+                data = response.json()
+                if data['code'] == '0' and data['data']:
+                    candle = data['data'][0]
+                    return {
+                        'timestamp': int(candle[0]),
+                        'volume_usdt': float(candle[7]),
+                        'volume_base': float(candle[5])
+                    }
+            except:
+                pass
+            return None
+        
+        result = {'success': True}
+        
+        # BTC 数据
+        btc_data = get_volume('BTC-USDT-SWAP')
+        if btc_data:
+            result['BTC'] = {
+                **btc_data,
+                'threshold': config['BTC-USDT-SWAP']['threshold'],
+                'enabled': config['BTC-USDT-SWAP']['enabled']
+            }
+        
+        # ETH 数据
+        eth_data = get_volume('ETH-USDT-SWAP')
+        if eth_data:
+            result['ETH'] = {
+                **eth_data,
+                'threshold': config['ETH-USDT-SWAP']['threshold'],
+                'enabled': config['ETH-USDT-SWAP']['enabled']
+            }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/volume-monitor/config', methods=['POST'])
+def volume_monitor_config():
+    """更新成交量监控配置"""
+    try:
+        data = request.get_json()
+        symbol = data.get('symbol')
+        threshold = data.get('threshold')
+        
+        config_file = Path('data/volume_monitor/volume_thresholds.json')
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # 加载现有配置
+        config = {}
+        if config_file.exists():
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新配置
+        if symbol not in config:
+            config[symbol] = {
+                'enabled': True,
+                'threshold': threshold,
+                'name': 'BTC永续' if 'BTC' in symbol else 'ETH永续'
+            }
+        else:
+            config[symbol]['threshold'] = threshold
+        
+        # 保存配置
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({'success': True, 'message': '配置已保存'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/volume-monitor/toggle', methods=['POST'])
+def volume_monitor_toggle():
+    """切换成交量监控开关"""
+    try:
+        data = request.get_json()
+        symbol = data.get('symbol')
+        enabled = data.get('enabled')
+        
+        config_file = Path('data/volume_monitor/volume_thresholds.json')
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # 加载现有配置
+        config = {}
+        if config_file.exists():
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新配置
+        if symbol in config:
+            config[symbol]['enabled'] = enabled
+        else:
+            config[symbol] = {
+                'enabled': enabled,
+                'threshold': 10_000_000_000 if 'BTC' in symbol else 5_000_000_000,
+                'name': 'BTC永续' if 'BTC' in symbol else 'ETH永续'
+            }
+        
+        # 保存配置
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({'success': True, 'message': f'监控已{"启用" if enabled else "禁用"}'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 

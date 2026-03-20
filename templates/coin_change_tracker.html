@@ -4912,6 +4912,141 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
+        <!-- BTC & ETH 5分钟成交量监控 -->
+        <div class="mb-6">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-chart-bar text-orange-500 mr-2"></i>
+                        BTC & ETH 5分钟成交量监控
+                    </h2>
+                    <button onclick="refreshVolumeData()" 
+                            class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>刷新数据</span>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- BTC 成交量卡片 -->
+                    <div class="p-4 rounded-lg border-2 border-orange-300 bg-orange-50">
+                        <div class="text-sm text-gray-600 mb-3 flex items-center justify-between">
+                            <span class="flex items-center">
+                                <i class="fab fa-bitcoin text-orange-500 mr-2"></i>
+                                BTC 永续合约
+                            </span>
+                            <span id="btcVolumeStatus" class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                                正常
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-500 mb-1">5分钟成交量</div>
+                            <div id="btcVolume" class="text-3xl font-bold text-orange-600">--</div>
+                            <div class="text-sm text-gray-500 mt-1" id="btcVolumeBase">-- BTC</div>
+                        </div>
+                        
+                        <div class="border-t pt-3 mb-3">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">阈值设置</span>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" 
+                                           id="btcThreshold" 
+                                           value="10" 
+                                           step="0.1" 
+                                           min="0"
+                                           class="w-20 px-2 py-1 border rounded text-right"
+                                           onchange="saveVolumeThreshold('BTC')">
+                                    <span class="text-gray-600">亿 USDT</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-3">
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" 
+                                           id="btcVolumeEnabled" 
+                                           checked
+                                           onchange="toggleVolumeMonitor('BTC')"
+                                           class="mr-2">
+                                    <span class="text-sm text-gray-700">启用监控</span>
+                                </label>
+                                <div class="text-xs text-gray-400" id="btcVolumeTime">
+                                    更新时间: --
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ETH 成交量卡片 -->
+                    <div class="p-4 rounded-lg border-2 border-purple-300 bg-purple-50">
+                        <div class="text-sm text-gray-600 mb-3 flex items-center justify-between">
+                            <span class="flex items-center">
+                                <i class="fab fa-ethereum text-purple-500 mr-2"></i>
+                                ETH 永续合约
+                            </span>
+                            <span id="ethVolumeStatus" class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                                正常
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-500 mb-1">5分钟成交量</div>
+                            <div id="ethVolume" class="text-3xl font-bold text-purple-600">--</div>
+                            <div class="text-sm text-gray-500 mt-1" id="ethVolumeBase">-- ETH</div>
+                        </div>
+                        
+                        <div class="border-t pt-3 mb-3">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">阈值设置</span>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" 
+                                           id="ethThreshold" 
+                                           value="5" 
+                                           step="0.1" 
+                                           min="0"
+                                           class="w-20 px-2 py-1 border rounded text-right"
+                                           onchange="saveVolumeThreshold('ETH')">
+                                    <span class="text-gray-600">亿 USDT</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-3">
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" 
+                                           id="ethVolumeEnabled" 
+                                           checked
+                                           onchange="toggleVolumeMonitor('ETH')"
+                                           class="mr-2">
+                                    <span class="text-sm text-gray-700">启用监控</span>
+                                </label>
+                                <div class="text-xs text-gray-400" id="ethVolumeTime">
+                                    更新时间: --
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 说明信息 -->
+                <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-600">
+                    <div class="font-semibold mb-2 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        监控说明
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 ml-4">
+                        <li>监控 OKX 上 BTC-USDT-SWAP 和 ETH-USDT-SWAP 的 5 分钟成交量</li>
+                        <li>当成交量超过设定阈值时，会通过 Telegram 发送通知</li>
+                        <li>每 5 分钟自动检查一次，15 分钟内不重复发送相同通知</li>
+                        <li>可随时调整阈值或启用/禁用监控</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- 图表区域 - 趋势图独占一行，放大2倍 -->
         <div class="grid grid-cols-1 gap-6 mb-6">
             <!-- 总涨跌幅趋势图 - 放大2倍 -->
@@ -15810,6 +15945,141 @@ pm2 status                                                # 查看所有进程�
             if (docPanelOpen === 'true') {
                 toggleDocPanel();
             }
+        });
+        
+        // ========== BTC & ETH 成交量监控函数 ==========
+        
+        // 加载成交量数据
+        async function loadVolumeData() {
+            try {
+                const response = await fetch('/api/volume-monitor/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 更新 BTC 数据
+                    if (data.BTC) {
+                        const btc = data.BTC;
+                        document.getElementById('btcVolume').textContent = 
+                            (btc.volume_usdt / 1_000_000_000).toFixed(2) + ' 亿';
+                        document.getElementById('btcVolumeBase').textContent = 
+                            btc.volume_base.toLocaleString() + ' BTC';
+                        document.getElementById('btcVolumeTime').textContent = 
+                            '更新: ' + new Date(btc.timestamp).toLocaleTimeString();
+                        document.getElementById('btcThreshold').value = 
+                            btc.threshold / 1_000_000_000;
+                        document.getElementById('btcVolumeEnabled').checked = btc.enabled;
+                        
+                        // 更新状态
+                        const btcStatus = document.getElementById('btcVolumeStatus');
+                        if (btc.volume_usdt > btc.threshold) {
+                            btcStatus.textContent = '⚠️ 超阈值';
+                            btcStatus.className = 'text-xs px-2 py-1 rounded-full bg-red-500 text-white font-bold animate-pulse';
+                        } else {
+                            btcStatus.textContent = '✓ 正常';
+                            btcStatus.className = 'text-xs px-2 py-1 rounded-full bg-green-500 text-white';
+                        }
+                    }
+                    
+                    // 更新 ETH 数据
+                    if (data.ETH) {
+                        const eth = data.ETH;
+                        document.getElementById('ethVolume').textContent = 
+                            (eth.volume_usdt / 1_000_000_000).toFixed(2) + ' 亿';
+                        document.getElementById('ethVolumeBase').textContent = 
+                            eth.volume_base.toLocaleString() + ' ETH';
+                        document.getElementById('ethVolumeTime').textContent = 
+                            '更新: ' + new Date(eth.timestamp).toLocaleTimeString();
+                        document.getElementById('ethThreshold').value = 
+                            eth.threshold / 1_000_000_000;
+                        document.getElementById('ethVolumeEnabled').checked = eth.enabled;
+                        
+                        // 更新状态
+                        const ethStatus = document.getElementById('ethVolumeStatus');
+                        if (eth.volume_usdt > eth.threshold) {
+                            ethStatus.textContent = '⚠️ 超阈值';
+                            ethStatus.className = 'text-xs px-2 py-1 rounded-full bg-red-500 text-white font-bold animate-pulse';
+                        } else {
+                            ethStatus.textContent = '✓ 正常';
+                            ethStatus.className = 'text-xs px-2 py-1 rounded-full bg-green-500 text-white';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('加载成交量数据失败:', error);
+            }
+        }
+        
+        // 刷新成交量数据
+        async function refreshVolumeData() {
+            const btn = event.target.closest('button');
+            const icon = btn.querySelector('i');
+            icon.classList.add('fa-spin');
+            
+            await loadVolumeData();
+            
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+            }, 500);
+        }
+        
+        // 保存阈值设置
+        async function saveVolumeThreshold(coin) {
+            const threshold = parseFloat(document.getElementById(`${coin.toLowerCase()}Threshold`).value);
+            const symbol = coin === 'BTC' ? 'BTC-USDT-SWAP' : 'ETH-USDT-SWAP';
+            
+            try {
+                const response = await fetch('/api/volume-monitor/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        threshold: threshold * 1_000_000_000  // 转换为 USDT
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log(`${coin} 阈值已保存: ${threshold} 亿 USDT`);
+                }
+            } catch (error) {
+                console.error('保存阈值失败:', error);
+            }
+        }
+        
+        // 切换监控开关
+        async function toggleVolumeMonitor(coin) {
+            const enabled = document.getElementById(`${coin.toLowerCase()}VolumeEnabled`).checked;
+            const symbol = coin === 'BTC' ? 'BTC-USDT-SWAP' : 'ETH-USDT-SWAP';
+            
+            try {
+                const response = await fetch('/api/volume-monitor/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        enabled: enabled
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log(`${coin} 监控已${enabled ? '启用' : '禁用'}`);
+                }
+            } catch (error) {
+                console.error('切换监控失败:', error);
+            }
+        }
+        
+        // 页面加载时初始化成交量数据
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVolumeData();
+            
+            // 每 30 秒自动刷新一次数据
+            setInterval(loadVolumeData, 30000);
         });
     </script>
 </body>
