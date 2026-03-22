@@ -139,6 +139,16 @@ BEIJING_TZ = pytz.timezone('Asia/Shanghai')
 from trading_api import trading_bp
 app.register_blueprint(trading_bp)
 
+# 🔴 禁用place-order API (2026-03-22)
+import sys
+sys.path.insert(0, '/home/user/webapp')
+try:
+    import disable_place_order_api
+    disable_place_order_api.init_app(app)
+except Exception as e:
+    print(f"[警告] 禁用API模块加载失败: {e}")
+
+
 # 导入SAR JSONL API
 from sar_api_jsonl import get_sar_current_cycle
 
@@ -1663,6 +1673,13 @@ def coin_change_tracker_page():
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
     return response
 
+@app.route('/btc-eth-ratio-chart')
+def btc_eth_ratio_chart_page():
+    """BTC vs ETH强弱对比曲线页面"""
+    response = make_response(render_template('btc_eth_ratio_chart.html'))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    return response
+
 @app.route('/test-10min-chart')
 def test_10min_chart():
     """测试10分钟上涨占比柱状图"""
@@ -2416,158 +2433,6 @@ def abc_position_close_all():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
-
-# ==================== 跟单系统 API ====================
-
-@app.route('/abc-position/api/copy-trading/config/<account_id>', methods=['GET', 'POST'])
-def copy_trading_config(account_id):
-    """获取/更新跟单配置"""
-    config_file = Path('/home/user/webapp/data/copy_trading') / f'copy_config_{account_id}.jsonl'
-    
-    if request.method == 'GET':
-        # 获取配置
-        try:
-            if not config_file.exists():
-                return jsonify({'success': False, 'error': '配置文件不存在'})
-            
-            with open(config_file, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                if lines:
-                    config = json.loads(lines[-1].strip())
-                    return jsonify({'success': True, 'config': config})
-                else:
-                    return jsonify({'success': False, 'error': '配置为空'})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
-    
-    elif request.method == 'POST':
-        # 更新配置
-        try:
-            data = request.json
-            
-            # 验证账户ID
-            if account_id not in ['A', 'B', 'C', 'D']:
-                return jsonify({'success': False, 'error': '无效的账户ID'})
-            
-            # 验证目标账户
-            target_account = data.get('target_account', '')
-            if target_account and target_account == account_id:
-                return jsonify({'success': False, 'error': '不能跟踪自己'})
-            
-            # 构建配置对象
-            config = {
-                'enabled': data.get('enabled', False),
-                'follower_account': account_id,
-                'target_account': target_account,
-                'trigger_type': data.get('trigger_type', 'profit'),
-                'trigger_percent': float(data.get('trigger_percent', 0)),
-                'strategy_type': data.get('strategy_type', 'manual'),
-                'position_side': data.get('position_side', 'long'),
-                'cost': float(data.get('cost', 10)),
-                'leverage': int(data.get('leverage', 50)),
-                'symbol': data.get('symbol', 'ETH-USDT-SWAP'),
-                'executed': data.get('executed', False),
-                'last_check': data.get('last_check', ''),
-                'last_trigger': data.get('last_trigger', ''),
-                'updated_at': datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).isoformat()
-            }
-            
-            # 保存配置
-            with open(config_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(config, ensure_ascii=False) + '\n')
-            
-            return jsonify({'success': True, 'message': '配置已更新', 'config': config})
-        
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e), 'traceback': traceback.format_exc()})
-
-
-@app.route('/abc-position/api/copy-trading/status', methods=['GET'])
-def copy_trading_status():
-    """获取所有账户的跟单状态"""
-    try:
-        config_dir = Path('/home/user/webapp/data/copy_trading')
-        statuses = {}
-        
-        for account_id in ['A', 'B', 'C', 'D']:
-            config_file = config_dir / f'copy_config_{account_id}.jsonl'
-            
-            if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
-                    if lines:
-                        config = json.loads(lines[-1].strip())
-                        statuses[account_id] = config
-        
-        return jsonify({'success': True, 'statuses': statuses})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
-@app.route('/abc-position/api/copy-trading/reset/<account_id>', methods=['POST'])
-def copy_trading_reset(account_id):
-    """重置跟单执行状态（允许再次执行）"""
-    try:
-        if account_id not in ['A', 'B', 'C', 'D']:
-            return jsonify({'success': False, 'error': '无效的账户ID'})
-        
-        config_file = Path('/home/user/webapp/data/copy_trading') / f'copy_config_{account_id}.jsonl'
-        
-        if not config_file.exists():
-            return jsonify({'success': False, 'error': '配置文件不存在'})
-        
-        # 读取当前配置
-        with open(config_file, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            if lines:
-                config = json.loads(lines[-1].strip())
-            else:
-                return jsonify({'success': False, 'error': '配置为空'})
-        
-        # 重置执行状态
-        config['executed'] = False
-        config['last_trigger'] = ''
-        config['updated_at'] = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).isoformat()
-        
-        # 保存
-        with open(config_file, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(config, ensure_ascii=False) + '\n')
-        
-        return jsonify({'success': True, 'message': '执行状态已重置', 'config': config})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
-@app.route('/abc-position/api/copy-trading/history/<account_id>', methods=['GET'])
-def copy_trading_history(account_id):
-    """获取跟单历史记录"""
-    try:
-        if account_id not in ['A', 'B', 'C', 'D']:
-            return jsonify({'success': False, 'error': '无效的账户ID'})
-        
-        config_file = Path('/home/user/webapp/data/copy_trading') / f'copy_config_{account_id}.jsonl'
-        
-        if not config_file.exists():
-            return jsonify({'success': False, 'error': '配置文件不存在'})
-        
-        # 读取所有历史记录
-        history = []
-        with open(config_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    history.append(json.loads(line.strip()))
-        
-        # 反转顺序，最新的在前
-        history.reverse()
-        
-        return jsonify({'success': True, 'history': history, 'count': len(history)})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
 
 @app.route('/api/server-date')
 def api_server_date():
@@ -23667,6 +23532,363 @@ def manual_check_protection():
             'error': str(e)
         })
 
+# ==================== BTC vs ETH 涨跌幅比例 API ====================
+
+@app.route('/api/btc-eth-ratio/latest', methods=['GET'])
+def get_btc_eth_ratio_latest():
+    """获取BTC vs ETH涨跌幅比例的最新数据"""
+    try:
+        from pathlib import Path
+        from datetime import datetime
+        from pytz import timezone
+        
+        # 获取北京时间日期
+        beijing_tz = timezone('Asia/Shanghai')
+        beijing_time = datetime.now(beijing_tz)
+        date_str = beijing_time.strftime('%Y%m%d')
+        
+        data_dir = Path('/home/user/webapp/data/btc_eth_change_ratio')
+        file_path = data_dir / f'btc_eth_ratio_{date_str}.jsonl'
+        
+        if not file_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'今日数据文件不存在: {date_str}'
+            }), 404
+        
+        # 读取最后一条记录
+        last_record = None
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    last_record = json.loads(line)
+        
+        if not last_record:
+            return jsonify({
+                'success': False,
+                'error': '数据文件为空'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'data': last_record,
+            'date': date_str
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/btc-eth-ratio/history', methods=['GET'])
+def get_btc_eth_ratio_history():
+    """获取BTC vs ETH涨跌幅比例的历史数据
+    
+    参数:
+        date: 日期字符串 (YYYYMMDD 或 YYYY-MM-DD)
+    """
+    try:
+        from pathlib import Path
+        from datetime import datetime
+        from pytz import timezone
+        
+        # 获取日期参数
+        date_param = request.args.get('date')
+        
+        if not date_param:
+            # 默认使用今天
+            beijing_tz = timezone('Asia/Shanghai')
+            beijing_time = datetime.now(beijing_tz)
+            date_str = beijing_time.strftime('%Y%m%d')
+        else:
+            # 移除日期中的连字符
+            date_str = date_param.replace('-', '')
+        
+        data_dir = Path('/home/user/webapp/data/btc_eth_change_ratio')
+        file_path = data_dir / f'btc_eth_ratio_{date_str}.jsonl'
+        
+        if not file_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date_str}'
+            }), 404
+        
+        # 读取所有记录
+        records = []
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    records.append(json.loads(line))
+        
+        # 获取统计信息
+        stats = None
+        if records:
+            last_record = records[-1]
+            stats = last_record.get('today_stats', {})
+        
+        return jsonify({
+            'success': True,
+            'date': date_str,
+            'count': len(records),
+            'data': records,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/btc-eth-ratio/stats', methods=['GET'])
+def get_btc_eth_ratio_stats():
+    """获取BTC vs ETH涨跌幅比例的每日统计
+    
+    参数:
+        date: 日期字符串 (YYYYMMDD 或 YYYY-MM-DD)，默认今天
+    """
+    try:
+        from pathlib import Path
+        from datetime import datetime
+        from pytz import timezone
+        
+        # 获取日期参数
+        date_param = request.args.get('date')
+        
+        if not date_param:
+            # 默认使用今天
+            beijing_tz = timezone('Asia/Shanghai')
+            beijing_time = datetime.now(beijing_tz)
+            date_str = beijing_time.strftime('%Y%m%d')
+        else:
+            # 移除日期中的连字符
+            date_str = date_param.replace('-', '')
+        
+        data_dir = Path('/home/user/webapp/data/btc_eth_change_ratio')
+        file_path = data_dir / f'btc_eth_ratio_{date_str}.jsonl'
+        
+        if not file_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date_str}'
+            }), 404
+        
+        # 读取最后一条记录获取统计信息
+        last_record = None
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    last_record = json.loads(line)
+        
+        if not last_record:
+            return jsonify({
+                'success': False,
+                'error': '数据文件为空'
+            }), 404
+        
+        stats = last_record.get('today_stats', {})
+        
+        return jsonify({
+            'success': True,
+            'date': date_str,
+            'stats': stats,
+            'last_update': last_record.get('timestamp')
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/btc-eth-ratio/chart-data', methods=['GET'])
+def get_btc_eth_ratio_chart_data():
+    """获取BTC vs ETH比例曲线图数据
+    
+    参数:
+        date: 日期字符串 (YYYYMMDD 或 YYYY-MM-DD)，可选，默认今天
+    
+    返回:
+        {
+            "success": true,
+            "date": "20260321",
+            "chart_data": {
+                "times": ["00:43", "00:44", ...],  // 时间标签（HH:MM格式）
+                "ratios": [0.0, 0.0, 3.45, ...],  // BTC>ETH的比例 (%)
+                "btc_changes": [-0.23, -0.22, ...],  // BTC涨跌幅 (%)
+                "eth_changes": [-0.13, -0.10, ...]   // ETH涨跌幅 (%)
+            },
+            "stats": {
+                "total_count": 768,
+                "btc_greater_count": 723,
+                "current_ratio": 94.14,
+                "max_ratio": 94.14,
+                "min_ratio": 0.0,
+                "avg_ratio": 75.32
+            }
+        }
+    """
+    try:
+        from pathlib import Path
+        from datetime import datetime
+        from pytz import timezone
+        
+        # 获取日期参数
+        date_param = request.args.get('date')
+        
+        if not date_param:
+            # 默认使用今天
+            beijing_tz = timezone('Asia/Shanghai')
+            beijing_time = datetime.now(beijing_tz)
+            date_str = beijing_time.strftime('%Y%m%d')
+        else:
+            # 移除日期中的连字符
+            date_str = date_param.replace('-', '')
+        
+        data_dir = Path('/home/user/webapp/data/btc_eth_change_ratio')
+        file_path = data_dir / f'btc_eth_ratio_{date_str}.jsonl'
+        
+        if not file_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date_str}'
+            }), 404
+        
+        # 读取所有记录
+        records = []
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    records.append(json.loads(line))
+        
+        if not records:
+            return jsonify({
+                'success': False,
+                'error': f'数据文件为空: {date_str}'
+            }), 404
+        
+        # 提取图表数据
+        times = []
+        ratios = []
+        btc_changes = []
+        eth_changes = []
+        
+        for record in records:
+            # 提取时间（只保留HH:MM）
+            timestamp = record.get('timestamp', '')
+            if timestamp:
+                time_parts = timestamp.split(' ')
+                if len(time_parts) >= 2:
+                    time_str = time_parts[1][:5]  # HH:MM
+                    times.append(time_str)
+                else:
+                    times.append('')
+            else:
+                times.append('')
+            
+            # 提取比例和涨跌幅
+            today_stats = record.get('today_stats', {})
+            ratio = today_stats.get('ratio', 0)
+            ratios.append(round(ratio, 2))
+            
+            btc_change = record.get('btc_change', 0)
+            btc_changes.append(round(btc_change, 2))
+            
+            eth_change = record.get('eth_change', 0)
+            eth_changes.append(round(eth_change, 2))
+        
+        # 计算统计信息
+        last_record = records[-1]
+        last_stats = last_record.get('today_stats', {})
+        
+        stats = {
+            'total_count': last_stats.get('total_count', 0),
+            'btc_greater_count': last_stats.get('btc_greater_count', 0),
+            'current_ratio': round(last_stats.get('ratio', 0), 2),
+            'max_ratio': round(max(ratios) if ratios else 0, 2),
+            'min_ratio': round(min(ratios) if ratios else 0, 2),
+            'avg_ratio': round(sum(ratios) / len(ratios) if ratios else 0, 2)
+        }
+        
+        return jsonify({
+            'success': True,
+            'date': date_str,
+            'chart_data': {
+                'times': times,
+                'ratios': ratios,
+                'btc_changes': btc_changes,
+                'eth_changes': eth_changes
+            },
+            'stats': stats
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/btc-eth-ratio/available-dates', methods=['GET'])
+def get_btc_eth_ratio_available_dates():
+    """获取BTC vs ETH涨跌幅比例可用日期列表"""
+    try:
+        from pathlib import Path
+        import re
+        
+        data_dir = Path('/home/user/webapp/data/btc_eth_change_ratio')
+        
+        if not data_dir.exists():
+            return jsonify({
+                'success': True,
+                'dates': [],
+                'count': 0
+            })
+        
+        # 扫描所有数据文件
+        dates = []
+        pattern = re.compile(r'btc_eth_ratio_(\d{8})\.jsonl')
+        
+        for file in data_dir.glob('btc_eth_ratio_*.jsonl'):
+            match = pattern.match(file.name)
+            if match:
+                date_str = match.group(1)
+                # 转换为 YYYY-MM-DD 格式
+                formatted_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                dates.append({
+                    'date': formatted_date,
+                    'date_str': date_str
+                })
+        
+        # 按日期倒序排列
+        dates.sort(key=lambda x: x['date_str'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'dates': dates,
+            'count': len(dates)
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
 # ==================== 锚定系统盈利指标监控 API ====================
 
 @app.route('/api/anchor-profit/latest')
@@ -34323,10 +34545,10 @@ def volume_monitor_status():
         config_file = Path('data/volume_monitor/volume_thresholds.json')
         state_file = Path('data/volume_monitor/volume_state.json')
         
-        # 默认配置
+        # 默认配置 (M USDT)
         config = {
-            'BTC-USDT-SWAP': {'enabled': True, 'threshold': 10_000_000_000, 'name': 'BTC永续'},
-            'ETH-USDT-SWAP': {'enabled': True, 'threshold': 5_000_000_000, 'name': 'ETH永续'}
+            'BTC-USDT-SWAP': {'enabled': True, 'threshold': 100_000_000, 'name': 'BTC永续'},  # 100M USDT
+            'ETH-USDT-SWAP': {'enabled': True, 'threshold': 50_000_000, 'name': 'ETH永续'}   # 50M USDT
         }
         
         # 加载配置
@@ -34438,7 +34660,7 @@ def volume_monitor_toggle():
         else:
             config[symbol] = {
                 'enabled': enabled,
-                'threshold': 10_000_000_000 if 'BTC' in symbol else 5_000_000_000,
+                'threshold': 100_000_000 if 'BTC' in symbol else 50_000_000,  # M USDT
                 'name': 'BTC永续' if 'BTC' in symbol else 'ETH永续'
             }
         
@@ -34447,6 +34669,94 @@ def volume_monitor_toggle():
             json.dump(config, f, indent=2, ensure_ascii=False)
         
         return jsonify({'success': True, 'message': f'监控已{"启用" if enabled else "禁用"}'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/volume-monitor/history', methods=['GET'])
+def volume_monitor_history():
+    """获取成交量历史数据"""
+    try:
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')  # BTC-USDT-SWAP 或 ETH-USDT-SWAP
+        date = request.args.get('date')  # YYYYMMDD 格式
+        limit = int(request.args.get('limit', 100))  # 返回最近N条记录
+        
+        # 如果没有指定日期，使用今天
+        if not date:
+            from datetime import datetime, timezone, timedelta
+            beijing_time = datetime.now(timezone(timedelta(hours=8)))
+            date = beijing_time.strftime('%Y%m%d')
+        
+        # 构建文件路径
+        data_dir = Path('data/volume_monitor')
+        symbol_file = symbol.replace('-', '_')
+        jsonl_file = data_dir / f'volume_{symbol_file}_{date}.jsonl'
+        
+        if not jsonl_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date}'
+            })
+        
+        # 读取数据
+        records = []
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    records.append(json.loads(line))
+        
+        # 返回最近的 limit 条记录
+        records = records[-limit:] if len(records) > limit else records
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'date': date,
+            'count': len(records),
+            'records': records
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/volume-monitor/dates', methods=['GET'])
+def volume_monitor_dates():
+    """获取可用的历史数据日期列表"""
+    try:
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')
+        data_dir = Path('data/volume_monitor')
+        
+        if not data_dir.exists():
+            return jsonify({'success': True, 'dates': []})
+        
+        # 查找所有该币种的 JSONL 文件
+        symbol_file = symbol.replace('-', '_')
+        pattern = f'volume_{symbol_file}_*.jsonl'
+        
+        dates = []
+        for file in data_dir.glob(pattern):
+            # 从文件名提取日期：volume_BTC_USDT_SWAP_20260320.jsonl
+            date_str = file.stem.split('_')[-1]  # 20260320
+            if len(date_str) == 8 and date_str.isdigit():
+                # 转换为 YYYY-MM-DD 格式
+                formatted_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                dates.append({
+                    'date': date_str,
+                    'formatted': formatted_date,
+                    'file': file.name
+                })
+        
+        # 按日期排序
+        dates.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'count': len(dates),
+            'dates': dates
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

@@ -1,14 +1,74 @@
 {
   "BTC-USDT-SWAP": {
-    "last_check": "2026-03-20 17:49:08",
-    "volume_usdt": 19735406.18421,
-    "volume_billion": 0.01973540618421,
-    "threshold_billion": 1.0
+    "last_check": "2026-03-22 17:09:10",
+    "volume_usdt": 6298099.66267,
+    "volume_billion": 0.00629809966267,
+    "threshold_billion": 0.18
   },
   "ETH-USDT-SWAP": {
-    "last_check": "2026-03-20 17:49:08",
-    "volume_usdt": 21702326.91096,
-    "volume_billion": 0.02170232691096,
-    "threshold_billion": 0.5
+    "last_check": "2026-03-22 17:09:11",
+    "volume_usdt": 21562064.46001,
+    "volume_billion": 0.02156206446001,
+    "threshold_billion": 0.13
+  },
+  "ETH-USDT-SWAP_1774136700000": {
+    "timestamp": 1774136700000,
+    "volume": 222653102.45235,
+    "price": 2121.66,
+    "alert_time": "2026-03-22 07:51:53"
+  },
+  "BTC-USDT-SWAP_1774137000000": {
+    "timestamp": 1774137000000,
+    "volume": 260730955.06513,
+    "price": 69074.0,
+    "alert_time": "2026-03-22 07:56:54"
+  },
+  "ETH-USDT-SWAP_1774137000000": {
+    "timestamp": 1774137000000,
+    "volume": 432097034.19352,
+    "price": 2088.58,
+    "alert_time": "2026-03-22 07:56:54"
+  },
+  "BTC-USDT-SWAP_1774137300000": {
+    "timestamp": 1774137300000,
+    "volume": 248645627.67962,
+    "price": 68889.3,
+    "alert_time": "2026-03-22 08:01:55"
+  },
+  "ETH-USDT-SWAP_1774137300000": {
+    "timestamp": 1774137300000,
+    "volume": 279151506.60035,
+    "price": 2083.41,
+    "alert_time": "2026-03-22 08:01:56"
+  },
+  "BTC-USDT-SWAP_1774137600000": {
+    "timestamp": 1774137600000,
+    "volume": 189920033.12008,
+    "price": 68405.2,
+    "alert_time": "2026-03-22 08:06:57"
+  },
+  "ETH-USDT-SWAP_1774137600000": {
+    "timestamp": 1774137600000,
+    "volume": 456188684.27005,
+    "price": 2057.01,
+    "alert_time": "2026-03-22 08:06:58"
+  },
+  "ETH-USDT-SWAP_1774137900000": {
+    "timestamp": 1774137900000,
+    "volume": 131886532.33255,
+    "price": 2074.46,
+    "alert_time": "2026-03-22 08:11:59"
+  },
+  "ETH-USDT-SWAP_1774166400000": {
+    "timestamp": 1774166400000,
+    "volume": 162237310.00443,
+    "price": 2087.91,
+    "alert_time": "2026-03-22 16:08:14"
+  },
+  "ETH-USDT-SWAP_1774167900000": {
+    "timestamp": 1774167900000,
+    "volume": 143096700.41317,
+    "price": 2076.09,
+    "alert_time": "2026-03-22 16:33:18"
   }
 }

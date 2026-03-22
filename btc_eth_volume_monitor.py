@@ -1,48 +1,51 @@
 #!/usr/bin/env python3
 """
-BTC & ETH 永续合约成交量监控
-监控 OKX 上 BTC-USDT-SWAP 和 ETH-USDT-SWAP 的 5 分钟成交量
-当超过设定阈值时发送 Telegram 通知
+BTC & ETH 5分钟成交量监控
+监控 OKX BTC-USDT-SWAP 和 ETH-USDT-SWAP 的 5 分钟成交量
+当成交量超过设定阈值时发送 Telegram 通知
 """
+import os
 import sys
 import time
 import json
 import requests
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 # 北京时间工具函数
+def get_beijing_now():
+    """获取当前北京时间"""
+    return datetime.now() + timedelta(hours=8)
+
 def get_beijing_now_str():
     """获取当前北京时间字符串"""
-    utc_now = datetime.now(timezone.utc)
-    beijing_now = utc_now + timedelta(hours=8)
-    return beijing_now.strftime('%Y-%m-%d %H:%M:%S')
+    return get_beijing_now().strftime('%Y-%m-%d %H:%M:%S')
+
+# Telegram 配置（使用与其他监控相同的配置）
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '-1003227444260')
 
 # 数据目录
 DATA_DIR = Path('/home/user/webapp/data/volume_monitor')
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# 配置文件
+# 配置文件（与 API 保持一致）
 CONFIG_FILE = DATA_DIR / 'volume_thresholds.json'
 STATE_FILE = DATA_DIR / 'volume_state.json'
 
-# 默认阈值配置
+# 默认配置 (M USDT)
 DEFAULT_CONFIG = {
     'BTC-USDT-SWAP': {
         'enabled': True,
-        'threshold': 1000000000,  # 10亿 USDT
-        'name': 'BTC永续'
+        'threshold': 100_000_000,  # 100M USDT
+        'name': 'BTC永续合约'
     },
     'ETH-USDT-SWAP': {
         'enabled': True,
-        'threshold': 500000000,   # 5亿 USDT
-        'name': 'ETH永续'
+        'threshold': 50_000_000,  # 50M USDT
+        'name': 'ETH永续合约'
     }
 }
-
-# Telegram 配置
-TG_BOT_TOKEN = '7738360227:AAHOdNEzsSy5W9kQkDu7y6xFaFITw6nCfyI'
-TG_CHAT_ID = '1837795395'
 
 
 def load_config():
@@ -77,156 +80,205 @@ def save_state(state):
 
 def get_5min_candle(symbol):
     """
-    获取 OKX 5分钟 K线数据
-    返回最新一根K线的成交量（单位：USDT）
+    获取指定币种的最新**已完成**5分钟K线数据
+    返回: (timestamp, volume, close_price) 或 None
     """
-    url = 'https://www.okx.com/api/v5/market/candles'
-    params = {
-        'instId': symbol,
-        'bar': '5m',
-        'limit': 1
-    }
-    
     try:
+        url = f"https://www.okx.com/api/v5/market/candles"
+        params = {
+            'instId': symbol,
+            'bar': '5m',
+            'limit': '2'  # 获取最近2根K线
+        }
+        
         response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
         data = response.json()
         
         if data['code'] == '0' and data['data']:
-            # OKX K线数据格式: [ts, o, h, l, c, vol, volCcy, volCcyQuote, confirm]
-            # volCcyQuote 是以报价货币(USDT)计价的成交量
-            candle = data['data'][0]
-            timestamp = int(candle[0])
-            volume_usdt = float(candle[7])  # volCcyQuote
-            volume_base = float(candle[5])  # vol (基础货币数量)
+            # data['data'][0] 是最新的K线（可能未完成）
+            # data['data'][1] 是上一根K线（已完成）
             
-            return {
-                'timestamp': timestamp,
-                'volume_usdt': volume_usdt,
-                'volume_base': volume_base,
-                'success': True
-            }
-        else:
-            print(f"❌ 获取 {symbol} K线失败: {data.get('msg', 'Unknown error')}")
-            return {'success': False, 'error': data.get('msg', 'Unknown error')}
-            
+            # 检查第一根K线是否已完成
+            if len(data['data']) >= 1:
+                latest_candle = data['data'][0]
+                is_confirmed = latest_candle[8] == '1'
+                
+                # 如果最新K线已确认（完成），使用它
+                if is_confirmed:
+                    candle = latest_candle
+                # 否则使用上一根已完成的K线
+                elif len(data['data']) >= 2:
+                    candle = data['data'][1]
+                else:
+                    # 没有已完成的K线数据
+                    return None
+                
+                # OKX K线数据格式: [ts, o, h, l, c, vol, volCcy, volCcyQuote, confirm]
+                # ts: 时间戳, vol: 成交量(张), volCcy: 成交量(币), volCcyQuote: 成交量(计价货币USDT)
+                timestamp = int(candle[0])
+                volume_usdt = float(candle[7])  # 使用 USDT 计价的成交量
+                close_price = float(candle[4])
+                
+                return timestamp, volume_usdt, close_price
+        
+        return None
+        
     except Exception as e:
-        print(f"❌ 请求 {symbol} K线异常: {e}")
-        return {'success': False, 'error': str(e)}
+        print(f"[{get_beijing_now_str()}] 获取 {symbol} K线数据失败: {e}")
+        return None
 
 
-def send_telegram_alert(symbol, volume_usdt, threshold, name):
-    """发送 Telegram 警报"""
-    volume_billion = volume_usdt / 1_000_000_000
-    threshold_billion = threshold / 1_000_000_000
-    
-    message = f"""
-🔔 <b>成交量警报</b>
-
-📊 <b>{name}</b> ({symbol})
-⏰ 时间: {get_beijing_now_str()}
-
-📈 <b>5分钟成交量</b>: {volume_billion:.2f}亿 USDT
-⚠️ <b>阈值</b>: {threshold_billion:.2f}亿 USDT
-
-🔥 成交量超过阈值 <b>{((volume_usdt / threshold - 1) * 100):.1f}%</b>
-"""
-    
-    url = f'https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage'
-    params = {
-        'chat_id': TG_CHAT_ID,
-        'text': message.strip(),
-        'parse_mode': 'HTML'
-    }
+def send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp):
+    """发送 Telegram 告警"""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print(f"[{get_beijing_now_str()}] Telegram 配置未设置，跳过发送")
+        return False
     
     try:
-        response = requests.post(url, json=params, timeout=10)
-        response.raise_for_status()
-        print(f"✅ Telegram 通知已发送: {name}")
-        return True
+        # 转换时间戳为北京时间
+        dt = datetime.fromtimestamp(timestamp / 1000)
+        beijing_time = dt + timedelta(hours=8)
+        time_str = beijing_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # 格式化成交量（单位：M）
+        volume_m = volume / 1_000_000
+        threshold_m = threshold / 1_000_000
+        
+        message = f"""🚨 <b>成交量告警</b>
+
+📊 <b>{config_name}</b>
+⏰ 时间: {time_str}
+💰 价格: ${price:,.2f}
+📈 5分钟成交量: <b>{volume_m:.2f}M</b>
+⚠️ 阈值: {threshold_m:.2f}M
+
+超过阈值 <b>{((volume/threshold - 1) * 100):.1f}%</b>"""
+        
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            'chat_id': TELEGRAM_CHAT_ID,
+            'text': message,
+            'parse_mode': 'HTML'
+        }
+        
+        response = requests.post(url, json=payload, timeout=10)
+        
+        if response.status_code == 200:
+            print(f"[{get_beijing_now_str()}] Telegram 告警发送成功: {config_name}")
+            return True
+        else:
+            print(f"[{get_beijing_now_str()}] Telegram 告警发送失败: {response.text}")
+            return False
+            
     except Exception as e:
-        print(f"❌ Telegram 通知发送失败: {e}")
+        print(f"[{get_beijing_now_str()}] 发送 Telegram 告警异常: {e}")
         return False
 
 
+def check_volume_alert(symbol, config, state):
+    """检查成交量并发送告警"""
+    if not config.get('enabled', False):
+        return
+    
+    result = get_5min_candle(symbol)
+    if not result:
+        return
+    
+    timestamp, volume, price = result
+    threshold = config['threshold']
+    config_name = config['name']
+    
+    # 检查是否超过阈值
+    if volume > threshold:
+        # 检查是否已经为这个时间点发送过告警
+        state_key = f"{symbol}_{timestamp}"
+        if state_key not in state:
+            print(f"[{get_beijing_now_str()}] {config_name} 成交量超过阈值: ${volume:,.0f} > ${threshold:,.0f}")
+            
+            # 发送告警
+            if send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp):
+                # 记录已发送
+                state[state_key] = {
+                    'timestamp': timestamp,
+                    'volume': volume,
+                    'price': price,
+                    'alert_time': get_beijing_now_str()
+                }
+                save_state(state)
+    
+    # 记录最新数据到 JSONL
+    record_volume_data(symbol, timestamp, volume, price, threshold)
+
+
+def record_volume_data(symbol, timestamp, volume, price, threshold):
+    """记录成交量数据到 JSONL（避免重复记录同一时间戳）"""
+    try:
+        beijing_date = get_beijing_now().strftime('%Y%m%d')
+        jsonl_file = DATA_DIR / f'volume_{symbol.replace("-", "_")}_{beijing_date}.jsonl'
+        
+        # 检查是否已经记录过这个时间戳
+        recorded_timestamps = set()
+        if jsonl_file.exists():
+            with open(jsonl_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        data = json.loads(line.strip())
+                        recorded_timestamps.add(data.get('timestamp'))
+                    except:
+                        pass
+        
+        # 如果这个时间戳已经记录过，跳过
+        if timestamp in recorded_timestamps:
+            print(f"[{get_beijing_now_str()}] {symbol} K线 {timestamp} 已记录，跳过")
+            return
+        
+        record = {
+            'timestamp': timestamp,
+            'datetime': datetime.fromtimestamp(timestamp / 1000 + 8*3600).strftime('%Y-%m-%d %H:%M:%S'),
+            'symbol': symbol,
+            'volume': volume,
+            'price': price,
+            'threshold': threshold,
+            'exceeded': volume > threshold,
+            'recorded_at': get_beijing_now_str()
+        }
+        
+        with open(jsonl_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(record, ensure_ascii=False) + '\n')
+        
+        print(f"[{get_beijing_now_str()}] ✅ 记录 {symbol} K线数据: {record['datetime']} 成交量: {volume/1_000_000:.2f}M")
+            
+    except Exception as e:
+        print(f"[{get_beijing_now_str()}] 记录成交量数据失败: {e}")
+
+
 def monitor_loop():
-    """监控主循环"""
-    print(f"[{get_beijing_now_str()}] 🚀 BTC & ETH 成交量监控启动...")
-    print(f"📁 配置文件: {CONFIG_FILE}")
-    print(f"📁 状态文件: {STATE_FILE}")
-    
-    # 加载配置
-    config = load_config()
-    print(f"\n📊 监控配置:")
-    for symbol, cfg in config.items():
-        if cfg['enabled']:
-            threshold_billion = cfg['threshold'] / 1_000_000_000
-            print(f"  • {cfg['name']} ({symbol}): {threshold_billion:.2f}亿 USDT")
-    
-    print(f"\n⏰ 每 5 分钟检查一次，开始监控...\n")
-    
-    # 上次警报时间（避免重复发送）
-    last_alert_time = {}
+    """主监控循环"""
+    print(f"[{get_beijing_now_str()}] BTC & ETH 成交量监控启动...")
+    print(f"[{get_beijing_now_str()}] 数据目录: {DATA_DIR}")
+    print(f"[{get_beijing_now_str()}] Telegram Bot: {'已配置' if TELEGRAM_BOT_TOKEN else '未配置'}")
     
     while True:
         try:
-            # 重新加载配置（支持动态修改）
             config = load_config()
-            current_time = time.time()
+            state = load_state()
             
-            for symbol, cfg in config.items():
-                if not cfg['enabled']:
-                    continue
-                
-                # 获取最新 5 分钟K线
-                result = get_5min_candle(symbol)
-                
-                if not result['success']:
-                    continue
-                
-                volume_usdt = result['volume_usdt']
-                threshold = cfg['threshold']
-                name = cfg['name']
-                
-                # 显示当前数据
-                volume_billion = volume_usdt / 1_000_000_000
-                threshold_billion = threshold / 1_000_000_000
-                print(f"[{get_beijing_now_str()}] {name}: {volume_billion:.2f}亿 USDT (阈值: {threshold_billion:.2f}亿)")
-                
-                # 检查是否超过阈值
-                if volume_usdt > threshold:
-                    # 检查是否在冷却期内（15分钟内不重复发送）
-                    last_alert = last_alert_time.get(symbol, 0)
-                    if current_time - last_alert > 900:  # 15分钟 = 900秒
-                        print(f"🔔 {name} 成交量超过阈值！发送通知...")
-                        if send_telegram_alert(symbol, volume_usdt, threshold, name):
-                            last_alert_time[symbol] = current_time
-                    else:
-                        remaining = int(900 - (current_time - last_alert))
-                        print(f"⏳ {name} 在冷却期内，{remaining}秒后可再次发送")
-                
-                # 保存状态
-                state = load_state()
-                state[symbol] = {
-                    'last_check': get_beijing_now_str(),
-                    'volume_usdt': volume_usdt,
-                    'volume_billion': volume_billion,
-                    'threshold_billion': threshold_billion
-                }
-                save_state(state)
+            # 检查 BTC
+            if 'BTC-USDT-SWAP' in config:
+                check_volume_alert('BTC-USDT-SWAP', config['BTC-USDT-SWAP'], state)
             
-            print()  # 空行
+            # 检查 ETH
+            if 'ETH-USDT-SWAP' in config:
+                check_volume_alert('ETH-USDT-SWAP', config['ETH-USDT-SWAP'], state)
             
-            # 等待 5 分钟
+            # 每5分钟检查一次（与K线周期对齐）
             time.sleep(300)
             
         except KeyboardInterrupt:
-            print(f"\n[{get_beijing_now_str()}] ⚠️ 收到中断信号，正在退出...")
+            print(f"\n[{get_beijing_now_str()}] 监控已停止")
             break
         except Exception as e:
-            print(f"[{get_beijing_now_str()}] ❌ 监控异常: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"[{get_beijing_now_str()}] 监控异常: {e}")
             time.sleep(60)
 
 

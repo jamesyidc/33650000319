@@ -231,8 +231,14 @@ def save_baseline(prices):
         print(f"[错误] 保存基准价格失败: {e}")
 
 
-def calculate_changes(current_prices, baseline_prices):
-    """计算涨跌幅"""
+def calculate_changes(current_prices, baseline_prices, open_prices=None):
+    """计算涨跌幅
+    
+    Args:
+        current_prices: 当前价格
+        baseline_prices: 基准价格（昨日收盘价）
+        open_prices: 今日开盘价（可选）
+    """
     changes = {}
     
     for symbol in SYMBOLS:
@@ -242,11 +248,21 @@ def calculate_changes(current_prices, baseline_prices):
             
             if baseline > 0:
                 change_pct = ((current - baseline) / baseline) * 100
-                changes[symbol] = {
+                coin_data = {
                     'current_price': current,
                     'baseline_price': baseline,
                     'change_pct': round(change_pct, 2)
                 }
+                
+                # 添加今日开盘价（如果有）
+                if open_prices and symbol in open_prices:
+                    coin_data['open_price'] = open_prices[symbol]
+                    # 计算相对于今日开盘价的涨跌幅
+                    if open_prices[symbol] > 0:
+                        daily_change_pct = ((current - open_prices[symbol]) / open_prices[symbol]) * 100
+                        coin_data['daily_change_pct'] = round(daily_change_pct, 2)
+                
+                changes[symbol] = coin_data
     
     return changes
 
@@ -344,6 +360,7 @@ def main():
     
     # 加载或初始化基准价格
     baseline_prices = load_baseline()
+    daily_open_prices = {}  # 今日开盘价
     last_baseline_date = None
     last_rsi_collect_time = None  # 记录上次RSI采集时间
     
@@ -356,8 +373,12 @@ def main():
         if baseline_prices:
             save_baseline(baseline_prices)
             last_baseline_date = today
+            daily_open_prices = baseline_prices.copy()  # 保存今日开盘价
     else:
         last_baseline_date = today
+        # 同时获取今日开盘价
+        print("[初始化] 获取今日开盘价...")
+        daily_open_prices = get_daily_open_prices()
     
     while True:
         try:
@@ -371,6 +392,7 @@ def main():
                 if baseline_prices:
                     save_baseline(baseline_prices)
                     last_baseline_date = current_date
+                    daily_open_prices = baseline_prices.copy()  # 更新今日开盘价
             
             print(f"\n[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始采集...")
             
@@ -429,8 +451,8 @@ def main():
                     time.sleep(60)
                     continue
                 
-                # 计算涨跌幅
-                changes = calculate_changes(current_prices, baseline_prices)
+                # 计算涨跌幅（传递今日开盘价）
+                changes = calculate_changes(current_prices, baseline_prices, daily_open_prices)
                 
                 # 再次检查：确保所有27个币种都有涨跌幅数据
                 if len(changes) < 27:
