@@ -6,13 +6,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 0,
-      "unrealized_pnl": 0,
-      "pnl_pct": 0,
-      "position_count": 0,
+      "total_cost": 9.99024,
+      "unrealized_pnl": 0.1224000000000524,
+      "pnl_pct": 1.23,
+      "position_count": 1,
       "account_name": "主账户",
       "okx_account": "account_main",
-      "color": "none"
+      "color": "green"
     },
     "B": {
       "positions": {
@@ -20,13 +20,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 0,
-      "unrealized_pnl": 0,
-      "pnl_pct": 0,
-      "position_count": 0,
+      "total_cost": 10.0290222,
+      "unrealized_pnl": -0.0168700000000395,
+      "pnl_pct": -0.17,
+      "position_count": 1,
       "account_name": "POIT",
       "okx_account": "account_poit_main",
-      "color": "none"
+      "color": "green"
     },
     "C": {
       "positions": {
@@ -63,6 +63,6 @@
     "last_update": null
   },
   "current_direction": "none",
-  "last_update": "2026-03-22T23:17:28.252251+08:00",
+  "last_update": "2026-03-23T01:05:39.620711+08:00",
   "trigger_history": []
 }

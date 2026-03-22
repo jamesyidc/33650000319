@@ -1,7 +1,7 @@
 {
-  "last_ratio": 0.18,
-  "last_status": "bearish",
-  "last_check_time": "2026-03-22 23:17:45",
-  "max_ratio": 33.33,
-  "threshold": 13.329999999999998
+  "last_ratio": 0.0,
+  "last_status": "bullish",
+  "last_check_time": "2026-03-23 01:05:49",
+  "max_ratio": 0.0,
+  "threshold": -20.0
 }
