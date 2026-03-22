@@ -18931,7 +18931,13 @@ def api_get_midnight_hedge_config(account_id):
     try:
         import json
         import os
-        from utils.beijing_time import get_beijing_now_str
+        from datetime import datetime
+        from pytz import timezone
+        
+        def get_beijing_now_str():
+            """获取北京时间字符串"""
+            beijing_tz = timezone('Asia/Shanghai')
+            return datetime.now(beijing_tz).strftime('%Y-%m-%d %H:%M:%S')
         
         # 🔧 修复：使用项目根目录的midnight_hedge_orders，而不是core_code/data/
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19007,7 +19013,13 @@ def api_update_midnight_hedge_config(account_id):
         import json
         import os
         from flask import request
-        from utils.beijing_time import get_beijing_now_str
+        from datetime import datetime
+        from pytz import timezone
+        
+        def get_beijing_now_str():
+            """获取北京时间字符串"""
+            beijing_tz = timezone('Asia/Shanghai')
+            return datetime.now(beijing_tz).strftime('%Y-%m-%d %H:%M:%S')
         
         data = request.get_json()
         
@@ -19098,7 +19110,12 @@ def api_reset_midnight_hedge_permission(account_id):
         import json
         import os
         from flask import request
-        from utils.beijing_time import get_beijing_now_str
+        from datetime import datetime
+        from pytz import timezone
+        
+        def get_beijing_now_str():
+            beijing_tz = timezone("Asia/Shanghai")
+            return datetime.now(beijing_tz).strftime("%Y-%m-%d %H:%M:%S")
         
         data = request.get_json()
         side = data.get('side')  # 'long', 'short', 或 'both'
@@ -19161,7 +19178,13 @@ def api_get_midnight_hedge_executions(account_id):
     try:
         import json
         import os
-        from utils.beijing_time import get_beijing_date_str
+        from datetime import datetime
+        from pytz import timezone
+        
+        def get_beijing_date_str():
+            """获取北京日期字符串"""
+            beijing_tz = timezone('Asia/Shanghai')
+            return datetime.now(beijing_tz).strftime('%Y%m%d')
         
         # 获取日期参数
         date_str = request.args.get('date', get_beijing_date_str())
@@ -19202,7 +19225,12 @@ def api_get_midnight_hedge_pnl(account_id):
     try:
         import json
         import os
-        from utils.beijing_time import get_beijing_date_str, get_beijing_time
+        from datetime import datetime
+        from pytz import timezone
+        
+        def get_beijing_date_str():
+            beijing_tz = timezone('Asia/Shanghai')
+            return datetime.now(beijing_tz).strftime('%Y%m%d'), get_beijing_time
         from datetime import timedelta
         
         # 获取日期参数
@@ -21144,6 +21172,9 @@ def manage_trade_ratings():
             # 写回文件
             with open(file_path, 'w', encoding='utf-8') as f:
                 for r in existing_ratings:
+         写回文件
+            with open(file_path, 'w', encoding='utf-8') as f:
+                for r in existing_ratings:
                     f.write(json.dumps(r, ensure_ascii=False) + '\n')
             
             return jsonify({
@@ -21510,12 +21541,7 @@ def close_all_okx_positions():
     """一键平仓所有持仓 - 遍历所有持仓并逐个平仓
     支持按posSide过滤: 传入'long'只平多单, 传入'short'只平空单, 不传或传'all'平所有
     """
-    try:
-        import hmac
-        import base64
-        from datetime import datetime, timezone
-        import requests
-        
+    
         data = request.get_json()
         api_key = data.get('apiKey', '')
         secret_key = data.get('apiSecret', '')
@@ -34769,6 +34795,10 @@ def volume_monitor_dates():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
+
+
+# ============================================================================
+p.run(host='0.0.0.0', port=9002, debug=False)
 
 
 # ============================================================================
