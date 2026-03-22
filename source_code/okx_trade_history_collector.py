@@ -23,8 +23,8 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 BEIJING_TZ = pytz.timezone('Asia/Shanghai')
 
 # 主账户API配置
-API_KEY = 'b0c18f2d-e014-4ae8-9c3c-cb02161de4db'
-API_SECRET = '92F864C599B2CE2EC5186AD14C8B4110'
+API_KEY = 'd6b272da-b59e-4ca3-97bd-663102f981b3'
+API_SECRET = '5D76ACDE6D74CF07842661385E12C61E'
 PASSPHRASE = 'Tencent@123'
 
 # OKX API配置

@@ -25,8 +25,8 @@ DATA_DIR = Path('/home/user/webapp/data/positive_ratio_stoploss')
 # 硬编码API密钥
 ACCOUNT_API_KEYS = {
     'account_main': {
-        'apiKey': 'b0c18f2d-e014-4ae8-9c3c-cb02161de4db',
-        'apiSecret': '92F864C599B2CE2EC5186AD14C8B4110',
+        'apiKey': 'd6b272da-b59e-4ca3-97bd-663102f981b3',
+        'apiSecret': '5D76ACDE6D74CF07842661385E12C61E',
         'passphrase': 'Tencent@123'
     },
     'account_fangfang12': {

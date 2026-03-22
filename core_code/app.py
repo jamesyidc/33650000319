@@ -1849,8 +1849,8 @@ def abc_position_real_positions():
         accounts_config = {
             'main': {
                 'name': '主账户',
-                'api_key': 'b0c18f2d-e014-4ae8-9c3c-cb02161de4db',
-                'secret_key': '92F864C599B2CE2EC5186AD14C8B4110',
+                'api_key': 'd6b272da-b59e-4ca3-97bd-663102f981b3',
+                'secret_key': '5D76ACDE6D74CF07842661385E12C61E',
                 'passphrase': 'Tencent@123'
             },
             'poit_main': {
@@ -2364,8 +2364,8 @@ def abc_position_close_all():
         # 获取OKX账户凭证
         accounts_config = {
             'main': {
-                'api_key': 'b0c18f2d-e014-4ae8-9c3c-cb02161de4db',
-                'secret_key': '92F864C599B2CE2EC5186AD14C8B4110',
+                'api_key': 'd6b272da-b59e-4ca3-97bd-663102f981b3',
+                'secret_key': '5D76ACDE6D74CF07842661385E12C61E',
                 'passphrase': 'Tencent@123'
             },
             'poit_main': {
@@ -16317,8 +16317,8 @@ def get_okx_account_balance_by_id(account_id):
                 {
                     "id": "account_main",
                     "name": "主账户",
-                    "apiKey": "b0c18f2d-e014-4ae8-9c3c-cb02161de4db",
-                    "apiSecret": "92F864C599B2CE2EC5186AD14C8B4110",
+                    "apiKey": "d6b272da-b59e-4ca3-97bd-663102f981b3",
+                    "apiSecret": "5D76ACDE6D74CF07842661385E12C61E",
                     "passphrase": "Tencent@123"
                 },
                 {
@@ -17439,8 +17439,8 @@ def get_okx_accounts_config():
                 {
                     "id": "account_main",
                     "name": "主账户",
-                    "apiKey": "b0c18f2d-e014-4ae8-9c3c-cb02161de4db",
-                    "apiSecret": "92F864C599B2CE2EC5186AD14C8B4110",
+                    "apiKey": "d6b272da-b59e-4ca3-97bd-663102f981b3",
+                    "apiSecret": "5D76ACDE6D74CF07842661385E12C61E",
                     "passphrase": "Tencent@123"
                 },
                 {
@@ -17501,8 +17501,8 @@ def get_okx_accounts_list():
                 {
                     "id": "account_main",
                     "name": "主账户",
-                    "apiKey": "b0c18f2d-e014-4ae8-9c3c-cb02161de4db",
-                    "apiSecret": "92F864C599B2CE2EC5186AD14C8B4110",
+                    "apiKey": "d6b272da-b59e-4ca3-97bd-663102f981b3",
+                    "apiSecret": "5D76ACDE6D74CF07842661385E12C61E",
                     "passphrase": "Tencent@123"
                 },
                 {

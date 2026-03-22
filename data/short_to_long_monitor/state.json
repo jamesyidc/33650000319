@@ -1,8 +1,8 @@
 {
   "last_date": "20260322",
-  "min_ratio_after_0030": 0.24,
-  "min_time": "16:52:05",
-  "trigger_ratio": 30.24,
+  "min_ratio_after_0030": 0.18,
+  "min_time": "22:20:42",
+  "trigger_ratio": 30.18,
   "triggered": false,
   "trigger_time": null
 }
