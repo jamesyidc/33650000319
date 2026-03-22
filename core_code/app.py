@@ -18933,8 +18933,9 @@ def api_get_midnight_hedge_config(account_id):
         import os
         from utils.beijing_time import get_beijing_now_str
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        config_dir = os.path.join(current_dir, 'data', 'midnight_hedge_orders')
+        # 🔧 修复：使用项目根目录的midnight_hedge_orders，而不是core_code/data/
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_dir = os.path.join(project_root, 'midnight_hedge_orders')
         os.makedirs(config_dir, exist_ok=True)
         
         config_file = os.path.join(config_dir, f'{account_id}_hedge_config.jsonl')
@@ -19010,8 +19011,9 @@ def api_update_midnight_hedge_config(account_id):
         
         data = request.get_json()
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        config_dir = os.path.join(current_dir, 'data', 'midnight_hedge_orders')
+        # 🔧 修复：使用项目根目录的midnight_hedge_orders，而不是core_code/data/
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_dir = os.path.join(project_root, 'midnight_hedge_orders')
         os.makedirs(config_dir, exist_ok=True)
         
         config_file = os.path.join(config_dir, f'{account_id}_hedge_config.jsonl')
@@ -19107,8 +19109,9 @@ def api_reset_midnight_hedge_permission(account_id):
                 'error': 'side参数必须是long、short或both'
             }), 400
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        config_file = os.path.join(current_dir, 'data', 'midnight_hedge_orders', f'{account_id}_hedge_config.jsonl')
+        # 🔧 修复：使用项目根目录的midnight_hedge_orders
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_file = os.path.join(project_root, 'midnight_hedge_orders', f'{account_id}_hedge_config.jsonl')
         
         if not os.path.exists(config_file):
             return jsonify({
@@ -19163,8 +19166,9 @@ def api_get_midnight_hedge_executions(account_id):
         # 获取日期参数
         date_str = request.args.get('date', get_beijing_date_str())
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        execution_dir = os.path.join(current_dir, 'data', 'midnight_hedge_orders', 'execution_records')
+        # 🔧 修复：使用项目根目录的midnight_hedge_orders
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        execution_dir = os.path.join(project_root, 'midnight_hedge_orders', 'execution_records')
         execution_file = os.path.join(execution_dir, f'{account_id}_executions_{date_str}.jsonl')
         
         records = []
@@ -19204,8 +19208,9 @@ def api_get_midnight_hedge_pnl(account_id):
         # 获取日期参数
         date_str = request.args.get('date', get_beijing_date_str())
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pnl_dir = os.path.join(current_dir, 'data', 'midnight_hedge_orders', 'pnl_records')
+        # 🔧 修复：使用项目根目录的midnight_hedge_orders
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        pnl_dir = os.path.join(project_root, 'midnight_hedge_orders', 'pnl_records')
         pnl_file = os.path.join(pnl_dir, f'{account_id}_pnl_{date_str}.jsonl')
         
         records = []
