@@ -21172,9 +21172,6 @@ def manage_trade_ratings():
             # 写回文件
             with open(file_path, 'w', encoding='utf-8') as f:
                 for r in existing_ratings:
-         写回文件
-            with open(file_path, 'w', encoding='utf-8') as f:
-                for r in existing_ratings:
                     f.write(json.dumps(r, ensure_ascii=False) + '\n')
             
             return jsonify({
@@ -21541,7 +21538,7 @@ def close_all_okx_positions():
     """一键平仓所有持仓 - 遍历所有持仓并逐个平仓
     支持按posSide过滤: 传入'long'只平多单, 传入'short'只平空单, 不传或传'all'平所有
     """
-    
+    try:
         data = request.get_json()
         api_key = data.get('apiKey', '')
         secret_key = data.get('apiSecret', '')

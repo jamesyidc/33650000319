@@ -10,5 +10,17 @@
     "base_limit": 300,
     "increment_days": 30,
     "increment_amount": 300
+  },
+  "fangfang12": {
+    "start_date": "2026-03-22",
+    "base_limit": 300,
+    "increment_days": 30,
+    "increment_amount": 300
+  },
+  "锚点账户": {
+    "start_date": "2026-03-22",
+    "base_limit": 300,
+    "increment_days": 30,
+    "increment_amount": 300
   }
 }
