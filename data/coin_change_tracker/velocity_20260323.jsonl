@@ -48,3 +48,12 @@
 {"timestamp": 1774198954073, "beijing_time": "2026-03-23 01:02:21", "velocity_5min": -3.58, "current_total_change": -10.25, "total_change_5min_ago": -6.67}
 {"timestamp": 1774199026049, "beijing_time": "2026-03-23 01:03:34", "velocity_5min": -3.76, "current_total_change": -10.02, "total_change_5min_ago": -6.26}
 {"timestamp": 1774199109754, "beijing_time": "2026-03-23 01:04:46", "velocity_5min": -3.15, "current_total_change": -10.53, "total_change_5min_ago": -7.38}
+{"timestamp": 1774199181630, "beijing_time": "2026-03-23 01:06:09", "velocity_5min": 1.96, "current_total_change": -10.26, "total_change_5min_ago": -12.22}
+{"timestamp": 1774199253446, "beijing_time": "2026-03-23 01:07:21", "velocity_5min": 0.83, "current_total_change": -9.42, "total_change_5min_ago": -10.25}
+{"timestamp": 1774199325432, "beijing_time": "2026-03-23 01:08:33", "velocity_5min": 1.45, "current_total_change": -8.57, "total_change_5min_ago": -10.02}
+{"timestamp": 1774199397289, "beijing_time": "2026-03-23 01:09:45", "velocity_5min": 1.81, "current_total_change": -8.72, "total_change_5min_ago": -10.53}
+{"timestamp": 1774199481186, "beijing_time": "2026-03-23 01:10:57", "velocity_5min": -0.07, "current_total_change": -10.33, "total_change_5min_ago": -10.26}
+{"timestamp": 1774199552980, "beijing_time": "2026-03-23 01:12:21", "velocity_5min": -0.09, "current_total_change": -9.51, "total_change_5min_ago": -9.42}
+{"timestamp": 1774199624850, "beijing_time": "2026-03-23 01:13:32", "velocity_5min": -0.34, "current_total_change": -8.91, "total_change_5min_ago": -8.57}
+{"timestamp": 1774199696663, "beijing_time": "2026-03-23 01:14:44", "velocity_5min": -0.28, "current_total_change": -9.0, "total_change_5min_ago": -8.72}
+{"timestamp": 1774199768593, "beijing_time": "2026-03-23 01:15:56", "velocity_5min": 1.36, "current_total_change": -8.97, "total_change_5min_ago": -10.33}

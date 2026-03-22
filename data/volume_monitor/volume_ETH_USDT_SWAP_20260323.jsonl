@@ -12,3 +12,5 @@
 {"timestamp": 1774198200000, "datetime": "2026-03-23 00:50:00", "symbol": "ETH-USDT-SWAP", "volume": 8085570.86806, "price": 2081.25, "threshold": 130000000, "exceeded": false, "recorded_at": "2026-03-23 00:55:17"}
 {"timestamp": 1774198500000, "datetime": "2026-03-23 00:55:00", "symbol": "ETH-USDT-SWAP", "volume": 5195017.30995, "price": 2081.06, "threshold": 130000000, "exceeded": false, "recorded_at": "2026-03-23 01:00:21"}
 {"timestamp": 1774198800000, "datetime": "2026-03-23 01:00:00", "symbol": "ETH-USDT-SWAP", "volume": 6665090.31398, "price": 2080.85, "threshold": 130000000, "exceeded": false, "recorded_at": "2026-03-23 01:05:22"}
+{"timestamp": 1774199100000, "datetime": "2026-03-23 01:05:00", "symbol": "ETH-USDT-SWAP", "volume": 4114994.95731, "price": 2081.74, "threshold": 130000000, "exceeded": false, "recorded_at": "2026-03-23 01:10:22"}
+{"timestamp": 1774199400000, "datetime": "2026-03-23 01:10:00", "symbol": "ETH-USDT-SWAP", "volume": 10520318.88699, "price": 2081.87, "threshold": 130000000, "exceeded": false, "recorded_at": "2026-03-23 01:15:23"}

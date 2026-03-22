@@ -12,3 +12,5 @@
 {"timestamp": 1774198200000, "datetime": "2026-03-23 00:50:00", "symbol": "BTC-USDT-SWAP", "volume": 6865682.0603, "price": 68784.2, "threshold": 180000000, "exceeded": false, "recorded_at": "2026-03-23 00:55:16"}
 {"timestamp": 1774198500000, "datetime": "2026-03-23 00:55:00", "symbol": "BTC-USDT-SWAP", "volume": 5722512.85768, "price": 68762.3, "threshold": 180000000, "exceeded": false, "recorded_at": "2026-03-23 01:00:21"}
 {"timestamp": 1774198800000, "datetime": "2026-03-23 01:00:00", "symbol": "BTC-USDT-SWAP", "volume": 5480091.3038, "price": 68772.9, "threshold": 180000000, "exceeded": false, "recorded_at": "2026-03-23 01:05:21"}
+{"timestamp": 1774199100000, "datetime": "2026-03-23 01:05:00", "symbol": "BTC-USDT-SWAP", "volume": 4255353.95303, "price": 68793.5, "threshold": 180000000, "exceeded": false, "recorded_at": "2026-03-23 01:10:22"}
+{"timestamp": 1774199400000, "datetime": "2026-03-23 01:10:00", "symbol": "BTC-USDT-SWAP", "volume": 2723962.63856, "price": 68783.9, "threshold": 180000000, "exceeded": false, "recorded_at": "2026-03-23 01:15:23"}

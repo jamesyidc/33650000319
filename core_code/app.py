@@ -139,14 +139,15 @@ BEIJING_TZ = pytz.timezone('Asia/Shanghai')
 from trading_api import trading_bp
 app.register_blueprint(trading_bp)
 
-# 🔴 禁用place-order API (2026-03-22)
-import sys
-sys.path.insert(0, '/home/user/webapp')
-try:
-    import disable_place_order_api
-    disable_place_order_api.init_app(app)
-except Exception as e:
-    print(f"[警告] 禁用API模块加载失败: {e}")
+# ✅ place-order API已启用 (2026-03-23)
+# 注释：API禁用功能已移除，恢复正常下单功能
+# import sys
+# sys.path.insert(0, '/home/user/webapp')
+# try:
+#     import disable_place_order_api
+#     disable_place_order_api.init_app(app)
+# except Exception as e:
+#     print(f"[警告] 禁用API模块加载失败: {e}")
 
 
 # 导入SAR JSONL API
