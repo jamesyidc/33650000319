@@ -172,3 +172,12 @@
 {"timestamp": 1774246504673, "beijing_time": "2026-03-23 14:15:04", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
 {"timestamp": 1774246804188, "beijing_time": "2026-03-23 14:20:04", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
 {"timestamp": 1774247100147, "beijing_time": "2026-03-23 14:25:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774247400103, "beijing_time": "2026-03-23 14:30:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774247700119, "beijing_time": "2026-03-23 14:35:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774248000140, "beijing_time": "2026-03-23 14:40:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774248300129, "beijing_time": "2026-03-23 14:45:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774248600124, "beijing_time": "2026-03-23 14:50:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774248900121, "beijing_time": "2026-03-23 14:55:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774249200128, "beijing_time": "2026-03-23 15:00:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774249500141, "beijing_time": "2026-03-23 15:05:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774249800143, "beijing_time": "2026-03-23 15:10:00", "bullish_count": 0, "bearish_count": 1, "bullish_symbols": [], "bearish_symbols": [{"current_position": "bearish", "last_update": "2026-03-23 15:09:00", "ratio": 83.3, "symbol": "CRO"}], "total_monitored": 28, "_computed_by": "backend"}
