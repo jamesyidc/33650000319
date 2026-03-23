@@ -143,6 +143,10 @@ def send_telegram_alert(symbol, config_name, volume, threshold_level, threshold_
         threshold_value: 阈值数值（对于V2是范围字符串）
         price: 价格
         timestamp: 时间戳
+    
+    发送规则：
+        - V1 高阈值：发送 3 遍（红色高亮，闪烁效果）
+        - V2 中等阈值：发送 1 遍（黄色提示）
     """
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print(f"[{get_beijing_now_str()}] Telegram 配置未设置，跳过发送")
@@ -164,13 +168,17 @@ def send_telegram_alert(symbol, config_name, volume, threshold_level, threshold_
             level_text = 'V1 高阈值'
             threshold_text = f'{threshold_m:.2f}M'
             exceed_percent = ((volume/threshold_value - 1) * 100)
+            repeat_count = 3  # V1 发送 3 遍
+            message_prefix = '🚨🚨🚨 '  # 三个警报符号
         else:  # V2
             level_emoji = '🟡'
             level_text = 'V2 中等阈值'
             threshold_text = threshold_value  # 已经是格式化的范围字符串
             exceed_percent = 0  # V2不计算超过百分比
+            repeat_count = 1  # V2 发送 1 遍
+            message_prefix = '⚠️ '  # 单个警告符号
         
-        message = f"""{level_emoji} <b>成交量告警 - {level_text}</b>
+        message = f"""{message_prefix}<b>成交量告警 - {level_text}</b>
 
 📊 <b>{config_name}</b>
 ⏰ 时间: {time_str}
@@ -179,22 +187,43 @@ def send_telegram_alert(symbol, config_name, volume, threshold_level, threshold_
 ⚠️ 阈值: {threshold_text}"""
 
         if threshold_level == 'V1' and exceed_percent > 0:
-            message += f"\n\n超过阈值 <b>{exceed_percent:.1f}%</b>"
+            message += f"\n\n🔥 超过阈值 <b>{exceed_percent:.1f}%</b> 🔥"
         
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = {
-            'chat_id': TELEGRAM_CHAT_ID,
-            'text': message,
-            'parse_mode': 'HTML'
-        }
         
-        response = requests.post(url, json=payload, timeout=10)
+        # 根据级别发送不同次数
+        success_count = 0
+        for i in range(repeat_count):
+            payload = {
+                'chat_id': TELEGRAM_CHAT_ID,
+                'text': message,
+                'parse_mode': 'HTML'
+            }
+            
+            try:
+                response = requests.post(url, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    success_count += 1
+                    if repeat_count > 1:
+                        print(f"[{get_beijing_now_str()}] Telegram 告警发送成功 ({i+1}/{repeat_count}): {config_name} - {level_text}")
+                    else:
+                        print(f"[{get_beijing_now_str()}] Telegram 告警发送成功: {config_name} - {level_text}")
+                    
+                    # V1级别的消息之间间隔1秒，避免被限流
+                    if i < repeat_count - 1:
+                        time.sleep(1)
+                else:
+                    print(f"[{get_beijing_now_str()}] Telegram 告警发送失败 ({i+1}/{repeat_count}): {response.text}")
+            except Exception as e:
+                print(f"[{get_beijing_now_str()}] Telegram 告警发送异常 ({i+1}/{repeat_count}): {e}")
         
-        if response.status_code == 200:
-            print(f"[{get_beijing_now_str()}] Telegram 告警发送成功: {config_name} - {level_text}")
+        # 只要有一次发送成功就返回True
+        if success_count > 0:
+            if repeat_count > 1:
+                print(f"[{get_beijing_now_str()}] ✅ {level_text} 告警发送完成: 成功 {success_count}/{repeat_count} 次")
             return True
         else:
-            print(f"[{get_beijing_now_str()}] Telegram 告警发送失败: {response.text}")
             return False
             
     except Exception as e:
