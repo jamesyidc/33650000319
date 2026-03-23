@@ -34218,6 +34218,106 @@ def get_available_aggregated_types():
     })
 
 
+@app.route('/api/coin-change-tracker/sentiment-change-stats', methods=['GET'])
+def get_sentiment_change_stats():
+    """获取2小时内看多/看空增加统计
+    
+    统计逻辑：
+    - 看多增加：币种从下跌转为上涨的次数（change_pct从负数变为正数或从负数变为0）
+    - 看空增加：币种从上涨转为下跌的次数（change_pct从正数或0变为负数）
+    """
+    try:
+        from datetime import datetime, timezone, timedelta
+        from pathlib import Path
+        import json
+        
+        # 获取当前北京时间
+        beijing_tz = timezone(timedelta(hours=8))
+        beijing_now = datetime.now(beijing_tz)
+        date_str = beijing_now.strftime('%Y%m%d')
+        
+        # 读取今天的数据文件
+        data_dir = Path('/home/user/webapp/data/coin_change_tracker')
+        data_file = data_dir / f'coin_change_{date_str}.jsonl'
+        
+        if not data_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date_str}'
+            }), 404
+        
+        # 读取最近2小时的数据
+        two_hours_ago_ms = (beijing_now - timedelta(hours=2)).timestamp() * 1000
+        
+        records = []
+        with open(data_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line.strip())
+                    timestamp = record.get('timestamp', 0)
+                    if timestamp >= two_hours_ago_ms:
+                        records.append(record)
+                except:
+                    continue
+        
+        if len(records) < 2:
+            return jsonify({
+                'success': True,
+                'long_increase': 0,
+                'short_increase': 0,
+                'window_hours': 2,
+                'records_count': len(records),
+                'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        # 统计每个币种的情绪变化
+        long_increase_count = 0  # 看多增加次数
+        short_increase_count = 0  # 看空增加次数
+        
+        # 遍历相邻记录，检测情绪变化
+        for i in range(1, len(records)):
+            prev_record = records[i-1]
+            curr_record = records[i]
+            
+            prev_changes = prev_record.get('changes', {})
+            curr_changes = curr_record.get('changes', {})
+            
+            # 遍历每个币种
+            for symbol in curr_changes.keys():
+                if symbol not in prev_changes:
+                    continue
+                
+                prev_pct = prev_changes[symbol].get('change_pct', 0)
+                curr_pct = curr_changes[symbol].get('change_pct', 0)
+                
+                # 检测看多增加：从负数变为正数或0
+                if prev_pct < 0 and curr_pct >= 0:
+                    long_increase_count += 1
+                
+                # 检测看空增加：从正数或0变为负数
+                if prev_pct >= 0 and curr_pct < 0:
+                    short_increase_count += 1
+        
+        return jsonify({
+            'success': True,
+            'long_increase': long_increase_count,
+            'short_increase': short_increase_count,
+            'window_hours': 2,
+            'records_count': len(records),
+            'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # ============================================================================
 # BTC 当日涨跌幅状态 API
 # ============================================================================

@@ -34,13 +34,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 59.990912,
-      "unrealized_pnl": 14.637199999999813,
-      "pnl_pct": 24.4,
-      "position_count": 1,
+      "total_cost": 0,
+      "unrealized_pnl": 0,
+      "pnl_pct": 0,
+      "position_count": 0,
       "account_name": "fangfang12",
       "okx_account": "account_fangfang12",
-      "color": "yellow"
+      "color": "none"
     },
     "D": {
       "positions": {
@@ -63,6 +63,6 @@
     "last_update": null
   },
   "current_direction": "none",
-  "last_update": "2026-03-23T15:12:22.039397+08:00",
+  "last_update": "2026-03-23T21:45:01.918669+08:00",
   "trigger_history": []
 }
