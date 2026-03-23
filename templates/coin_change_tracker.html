@@ -5037,10 +5037,15 @@ pm2 status                                                # 查看所有进程�
                             <div class="text-sm text-gray-500 mt-1" id="btcVolumeBase">-- BTC</div>
                         </div>
                         
-                        <!-- 今日超过阈值次数 - 分V1/V2统计 -->
+                        <!-- 今日超过阈值次数 - 分V1/V2统计（可折叠） -->
                         <div class="mb-3 p-2 bg-orange-100 rounded">
-                            <div class="text-xs text-gray-600 mb-2">今日超过阈值</div>
-                            <div class="space-y-1">
+                            <div class="flex items-center justify-between mb-2 cursor-pointer" onclick="toggleVolumeStats('btc')">
+                                <div class="text-xs text-gray-600">今日超过阈值</div>
+                                <button class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                    <i id="btcStatsToggleIcon" class="fas fa-chevron-up transition-transform duration-300"></i>
+                                </button>
+                            </div>
+                            <div id="btcVolumeStatsContent" class="space-y-1 transition-all duration-300 overflow-hidden">
                                 <!-- V1 统计 -->
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs flex items-center">
@@ -5148,10 +5153,15 @@ pm2 status                                                # 查看所有进程�
                             <div class="text-sm text-gray-500 mt-1" id="ethVolumeBase">-- ETH</div>
                         </div>
                         
-                        <!-- 今日超过阈值次数 - 分V1/V2统计 -->
+                        <!-- 今日超过阈值次数 - 分V1/V2统计（可折叠） -->
                         <div class="mb-3 p-2 bg-purple-100 rounded">
-                            <div class="text-xs text-gray-600 mb-2">今日超过阈值</div>
-                            <div class="space-y-1">
+                            <div class="flex items-center justify-between mb-2 cursor-pointer" onclick="toggleVolumeStats('eth')">
+                                <div class="text-xs text-gray-600">今日超过阈值</div>
+                                <button class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                    <i id="ethStatsToggleIcon" class="fas fa-chevron-up transition-transform duration-300"></i>
+                                </button>
+                            </div>
+                            <div id="ethVolumeStatsContent" class="space-y-1 transition-all duration-300 overflow-hidden">
                                 <!-- V1 统计 -->
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs flex items-center">
@@ -16372,12 +16382,63 @@ pm2 status                                                # 查看所有进程�
             }
         }
         
+        // 成交量统计折叠/展开函数
+        function toggleVolumeStats(coin) {
+            const content = document.getElementById(`${coin}VolumeStatsContent`);
+            const icon = document.getElementById(`${coin}StatsToggleIcon`);
+            const storageKey = `volumeStats_${coin}_collapsed`;
+            
+            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                // 折叠
+                content.style.maxHeight = '0px';
+                content.style.paddingTop = '0px';
+                content.style.paddingBottom = '0px';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                localStorage.setItem(storageKey, 'true');
+            } else {
+                // 展开
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.paddingTop = '';
+                content.style.paddingBottom = '';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                localStorage.setItem(storageKey, 'false');
+            }
+        }
+        
+        // 页面加载时恢复统计数据折叠状态
+        function restoreVolumeStatsState() {
+            ['btc', 'eth'].forEach(coin => {
+                const content = document.getElementById(`${coin}VolumeStatsContent`);
+                const icon = document.getElementById(`${coin}StatsToggleIcon`);
+                const storageKey = `volumeStats_${coin}_collapsed`;
+                const isCollapsed = localStorage.getItem(storageKey) === 'true';
+                
+                if (content) {
+                    if (isCollapsed) {
+                        content.style.maxHeight = '0px';
+                        content.style.paddingTop = '0px';
+                        content.style.paddingBottom = '0px';
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    } else {
+                        // 初始状态设置 maxHeight
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                    }
+                }
+            });
+        }
+        
         // 页面加载时恢复文档面板状态
         window.addEventListener('DOMContentLoaded', () => {
             const docPanelOpen = localStorage.getItem('docPanelOpen');
             if (docPanelOpen === 'true') {
                 toggleDocPanel();
             }
+            
+            // 恢复统计数据折叠状态
+            restoreVolumeStatsState();
         });
         
         // ========== BTC & ETH 成交量监控函数 ==========
