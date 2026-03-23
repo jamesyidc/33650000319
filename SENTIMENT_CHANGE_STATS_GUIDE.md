@@ -11,23 +11,39 @@
 
 ---
 
-## 🎯 统计逻辑
+## 🎯 统计逻辑（类似SAR统计）
+
+### 看多币种 / 看空币种定义
+- **看多币种**：当前涨跌幅 `change_pct > 0` 的币种
+- **看空币种**：当前涨跌幅 `change_pct < 0` 的币种
 
 ### 看多增加（Long Increase）
-当币种的涨跌幅 `change_pct` 从**负数**变为**0或正数**时，计数+1。
+统计2小时内看多币种数量的**净增加**。
+
+**计算公式**：
+```
+看多增加 = 当前看多币种数 - 2小时前看多币种数
+（如果结果为负数，则显示为0）
+```
 
 **示例**：
-- BTC从 -0.5% → +0.2%（✅ 计入看多增加）
-- ETH从 -1.2% → 0.0%（✅ 计入看多增加）
-- SOL从 +0.3% → +1.5%（❌ 不计入，两次都是正数）
+- 2小时前：23个币种上涨（看多）
+- 现在：26个币种上涨（看多）
+- 看多增加 = 26 - 23 = **3个** ✅
 
 ### 看空增加（Short Increase）
-当币种的涨跌幅 `change_pct` 从**0或正数**变为**负数**时，计数+1。
+统计2小时内看空币种数量的**净增加**。
+
+**计算公式**：
+```
+看空增加 = 当前看空币种数 - 2小时前看空币种数
+（如果结果为负数，则显示为0）
+```
 
 **示例**：
-- BTC从 +0.8% → -0.3%（✅ 计入看空增加）
-- ETH从 0.0% → -0.5%（✅ 计入看空增加）
-- SOL从 -0.5% → -1.2%（❌ 不计入，两次都是负数）
+- 2小时前：4个币种下跌（看空）
+- 现在：1个币种下跌（看空）
+- 看空增加 = 1 - 4 = -3 → 显示为 **0** ✅
 
 ---
 
@@ -42,11 +58,16 @@ GET /api/coin-change-tracker/sentiment-change-stats
 ```json
 {
   "success": true,
-  "long_increase": 15,
-  "short_increase": 8,
+  "long_increase": 3,
+  "short_increase": 0,
+  "current_long": 26,
+  "current_short": 1,
+  "previous_long": 23,
+  "previous_short": 4,
   "window_hours": 2,
-  "records_count": 89,
-  "update_time": "2026-03-23 21:45:48"
+  "update_time": "2026-03-23 22:05:14",
+  "current_time": "2026-03-23 22:04:41",
+  "previous_time": "2026-03-23 20:04:14"
 }
 ```
 
@@ -54,11 +75,16 @@ GET /api/coin-change-tracker/sentiment-change-stats
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `success` | boolean | API调用是否成功 |
-| `long_increase` | integer | 2小时内看多增加的次数 |
-| `short_increase` | integer | 2小时内看空增加的次数 |
+| `long_increase` | integer | 2小时内看多币种数量的增加 |
+| `short_increase` | integer | 2小时内看空币种数量的增加 |
+| `current_long` | integer | 当前看多币种数量 |
+| `current_short` | integer | 当前看空币种数量 |
+| `previous_long` | integer | 2小时前看多币种数量 |
+| `previous_short` | integer | 2小时前看空币种数量 |
 | `window_hours` | integer | 统计时间窗口（小时） |
-| `records_count` | integer | 分析的数据记录数量 |
 | `update_time` | string | 数据更新时间（北京时间） |
+| `current_time` | string | 当前记录的时间 |
+| `previous_time` | string | 2小时前记录的时间 |
 
 ---
 
@@ -122,32 +148,69 @@ GET /api/coin-change-tracker/sentiment-change-stats
 
 ## 📊 示例数据解读
 
-### 场景1：牛市启动
+### 场景1：牛市启动信号
 ```json
 {
-  "long_increase": 45,
-  "short_increase": 8
+  "long_increase": 8,
+  "short_increase": 0,
+  "current_long": 25,
+  "current_short": 2,
+  "previous_long": 17,
+  "previous_short": 10
 }
 ```
-**解读**：大量币种从下跌转为上涨，市场情绪明显转多。
+**解读**：
+- 2小时内，看多币种从17个增加到25个（+8）
+- 看空币种从10个减少到2个（-8，显示为0）
+- **结论**：市场情绪明显转多，可能是牛市启动信号 🟢
 
-### 场景2：熊市来临
+### 场景2：熊市来临警告
 ```json
 {
-  "long_increase": 5,
-  "short_increase": 38
+  "long_increase": 0,
+  "short_increase": 7,
+  "current_long": 8,
+  "current_short": 19,
+  "previous_long": 15,
+  "previous_short": 12
 }
 ```
-**解读**：大量币种从上涨转为下跌，市场情绪明显转空。
+**解读**：
+- 2小时内，看空币种从12个增加到19个（+7）
+- 看多币种从15个减少到8个（-7，显示为0）
+- **结论**：市场情绪明显转空，警惕回调风险 🔴
 
 ### 场景3：震荡行情
 ```json
 {
-  "long_increase": 12,
-  "short_increase": 15
+  "long_increase": 2,
+  "short_increase": 1,
+  "current_long": 14,
+  "current_short": 13,
+  "previous_long": 12,
+  "previous_short": 15
 }
 ```
-**解读**：多空力量基本平衡，市场处于震荡状态。
+**解读**：
+- 看多币种小幅增加2个
+- 看空币种小幅减少2个（但因为之前15→现在13是减少，显示为0；由于另一些币种变化，实际增加1）
+- 多空力量基本平衡
+- **结论**：市场处于震荡状态，方向不明 🟡
+
+### 场景4：市场平静期
+```json
+{
+  "long_increase": 0,
+  "short_increase": 0,
+  "current_long": 18,
+  "current_short": 9,
+  "previous_long": 18,
+  "previous_short": 9
+}
+```
+**解读**：
+- 看多/看空币种数量完全没有变化
+- **结论**：市场横盘整理，缺乏方向性 ⚪
 
 ---
 
