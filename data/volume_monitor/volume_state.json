@@ -1,14 +1,14 @@
 {
   "BTC-USDT-SWAP": {
-    "last_check": "2026-03-23 11:57:28",
-    "volume_usdt": 6229289.47331,
-    "volume_billion": 0.00622928947331,
+    "last_check": "2026-03-23 12:07:29",
+    "volume_usdt": 8253716.84774,
+    "volume_billion": 0.008253716847740001,
     "threshold_billion": 0.18
   },
   "ETH-USDT-SWAP": {
-    "last_check": "2026-03-23 11:57:28",
-    "volume_usdt": 5304830.54179,
-    "volume_billion": 0.00530483054179,
+    "last_check": "2026-03-23 12:07:29",
+    "volume_usdt": 7187051.3471,
+    "volume_billion": 0.0071870513471,
     "threshold_billion": 0.13
   },
   "ETH-USDT-SWAP_1774136700000": {

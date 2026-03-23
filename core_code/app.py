@@ -34574,10 +34574,22 @@ def volume_monitor_status():
         config_file = Path('data/volume_monitor/volume_thresholds.json')
         state_file = Path('data/volume_monitor/volume_state.json')
         
-        # 默认配置 (M USDT)
+        # 默认配置 (M USDT) - 双阈值系统
         config = {
-            'BTC-USDT-SWAP': {'enabled': True, 'threshold': 100_000_000, 'name': 'BTC永续'},  # 100M USDT
-            'ETH-USDT-SWAP': {'enabled': True, 'threshold': 50_000_000, 'name': 'ETH永续'}   # 50M USDT
+            'BTC-USDT-SWAP': {
+                'enabled': True,
+                'threshold_v1': 180_000_000,  # 180M USDT - V1高阈值
+                'threshold_v2_min': 100_000_000,  # 100M USDT - V2最小值
+                'threshold_v2_max': 180_000_000,  # 180M USDT - V2最大值
+                'name': 'BTC永续'
+            },
+            'ETH-USDT-SWAP': {
+                'enabled': True,
+                'threshold_v1': 130_000_000,  # 130M USDT - V1高阈值
+                'threshold_v2_min': 50_000_000,  # 50M USDT - V2最小值
+                'threshold_v2_max': 130_000_000,  # 130M USDT - V2最大值
+                'name': 'ETH永续'
+            }
         }
         
         # 加载配置
@@ -34608,19 +34620,25 @@ def volume_monitor_status():
         # BTC 数据
         btc_data = get_volume('BTC-USDT-SWAP')
         if btc_data:
+            btc_config = config.get('BTC-USDT-SWAP', {})
             result['BTC'] = {
                 **btc_data,
-                'threshold': config['BTC-USDT-SWAP']['threshold'],
-                'enabled': config['BTC-USDT-SWAP']['enabled']
+                'threshold_v1': btc_config.get('threshold_v1', btc_config.get('threshold', 180_000_000)),
+                'threshold_v2_min': btc_config.get('threshold_v2_min', 100_000_000),
+                'threshold_v2_max': btc_config.get('threshold_v2_max', 180_000_000),
+                'enabled': btc_config.get('enabled', True)
             }
         
         # ETH 数据
         eth_data = get_volume('ETH-USDT-SWAP')
         if eth_data:
+            eth_config = config.get('ETH-USDT-SWAP', {})
             result['ETH'] = {
                 **eth_data,
-                'threshold': config['ETH-USDT-SWAP']['threshold'],
-                'enabled': config['ETH-USDT-SWAP']['enabled']
+                'threshold_v1': eth_config.get('threshold_v1', eth_config.get('threshold', 130_000_000)),
+                'threshold_v2_min': eth_config.get('threshold_v2_min', 50_000_000),
+                'threshold_v2_max': eth_config.get('threshold_v2_max', 130_000_000),
+                'enabled': eth_config.get('enabled', True)
             }
         
         return jsonify(result)
@@ -34631,11 +34649,16 @@ def volume_monitor_status():
 
 @app.route('/api/volume-monitor/config', methods=['POST'])
 def volume_monitor_config():
-    """更新成交量监控配置"""
+    """更新成交量监控配置（支持双阈值）"""
     try:
         data = request.get_json()
         symbol = data.get('symbol')
+        
+        # 支持单阈值（向后兼容）或双阈值
         threshold = data.get('threshold')
+        threshold_v1 = data.get('threshold_v1', threshold)
+        threshold_v2_min = data.get('threshold_v2_min')
+        threshold_v2_max = data.get('threshold_v2_max')
         
         config_file = Path('data/volume_monitor/volume_thresholds.json')
         config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -34648,19 +34671,31 @@ def volume_monitor_config():
         
         # 更新配置
         if symbol not in config:
+            # 默认值
+            default_v1 = 180_000_000 if 'BTC' in symbol else 130_000_000
+            default_v2_min = 100_000_000 if 'BTC' in symbol else 50_000_000
+            
             config[symbol] = {
                 'enabled': True,
-                'threshold': threshold,
+                'threshold_v1': threshold_v1 or default_v1,
+                'threshold_v2_min': threshold_v2_min or default_v2_min,
+                'threshold_v2_max': threshold_v2_max or threshold_v1 or default_v1,
                 'name': 'BTC永续' if 'BTC' in symbol else 'ETH永续'
             }
         else:
-            config[symbol]['threshold'] = threshold
+            # 更新现有配置
+            if threshold_v1 is not None:
+                config[symbol]['threshold_v1'] = threshold_v1
+            if threshold_v2_min is not None:
+                config[symbol]['threshold_v2_min'] = threshold_v2_min
+            if threshold_v2_max is not None:
+                config[symbol]['threshold_v2_max'] = threshold_v2_max
         
         # 保存配置
         with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         
-        return jsonify({'success': True, 'message': '配置已保存'})
+        return jsonify({'success': True, 'message': '配置已保存', 'config': config[symbol]})
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -34687,9 +34722,15 @@ def volume_monitor_toggle():
         if symbol in config:
             config[symbol]['enabled'] = enabled
         else:
+            # 默认双阈值配置
+            default_v1 = 180_000_000 if 'BTC' in symbol else 130_000_000
+            default_v2_min = 100_000_000 if 'BTC' in symbol else 50_000_000
+            
             config[symbol] = {
                 'enabled': enabled,
-                'threshold': 100_000_000 if 'BTC' in symbol else 50_000_000,  # M USDT
+                'threshold_v1': default_v1,
+                'threshold_v2_min': default_v2_min,
+                'threshold_v2_max': default_v1,
                 'name': 'BTC永续' if 'BTC' in symbol else 'ETH永续'
             }
         

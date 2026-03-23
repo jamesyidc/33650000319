@@ -37,12 +37,16 @@ STATE_FILE = DATA_DIR / 'volume_state.json'
 DEFAULT_CONFIG = {
     'BTC-USDT-SWAP': {
         'enabled': True,
-        'threshold': 100_000_000,  # 100M USDT
+        'threshold_v1': 180_000_000,  # 180M USDT - V1阈值（大于此值）
+        'threshold_v2_min': 100_000_000,  # 100M USDT - V2最小值
+        'threshold_v2_max': 180_000_000,  # 180M USDT - V2最大值（大于min且小于max）
         'name': 'BTC永续合约'
     },
     'ETH-USDT-SWAP': {
         'enabled': True,
-        'threshold': 50_000_000,  # 50M USDT
+        'threshold_v1': 130_000_000,  # 130M USDT - V1阈值（大于此值）
+        'threshold_v2_min': 50_000_000,  # 50M USDT - V2最小值
+        'threshold_v2_max': 130_000_000,  # 130M USDT - V2最大值（大于min且小于max）
         'name': 'ETH永续合约'
     }
 }
@@ -128,8 +132,18 @@ def get_5min_candle(symbol):
         return None
 
 
-def send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp):
-    """发送 Telegram 告警"""
+def send_telegram_alert(symbol, config_name, volume, threshold_level, threshold_value, price, timestamp):
+    """发送 Telegram 告警
+    
+    Args:
+        symbol: 交易对符号
+        config_name: 配置名称
+        volume: 成交量
+        threshold_level: 阈值级别 ('V1' 或 'V2')
+        threshold_value: 阈值数值（对于V2是范围字符串）
+        price: 价格
+        timestamp: 时间戳
+    """
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print(f"[{get_beijing_now_str()}] Telegram 配置未设置，跳过发送")
         return False
@@ -142,17 +156,30 @@ def send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp
         
         # 格式化成交量（单位：M）
         volume_m = volume / 1_000_000
-        threshold_m = threshold / 1_000_000
         
-        message = f"""🚨 <b>成交量告警</b>
+        # 根据阈值级别生成不同的消息
+        if threshold_level == 'V1':
+            threshold_m = threshold_value / 1_000_000
+            level_emoji = '🔴'
+            level_text = 'V1 高阈值'
+            threshold_text = f'{threshold_m:.2f}M'
+            exceed_percent = ((volume/threshold_value - 1) * 100)
+        else:  # V2
+            level_emoji = '🟡'
+            level_text = 'V2 中等阈值'
+            threshold_text = threshold_value  # 已经是格式化的范围字符串
+            exceed_percent = 0  # V2不计算超过百分比
+        
+        message = f"""{level_emoji} <b>成交量告警 - {level_text}</b>
 
 📊 <b>{config_name}</b>
 ⏰ 时间: {time_str}
 💰 价格: ${price:,.2f}
 📈 5分钟成交量: <b>{volume_m:.2f}M</b>
-⚠️ 阈值: {threshold_m:.2f}M
+⚠️ 阈值: {threshold_text}"""
 
-超过阈值 <b>{((volume/threshold - 1) * 100):.1f}%</b>"""
+        if threshold_level == 'V1' and exceed_percent > 0:
+            message += f"\n\n超过阈值 <b>{exceed_percent:.1f}%</b>"
         
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
@@ -164,7 +191,7 @@ def send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp
         response = requests.post(url, json=payload, timeout=10)
         
         if response.status_code == 200:
-            print(f"[{get_beijing_now_str()}] Telegram 告警发送成功: {config_name}")
+            print(f"[{get_beijing_now_str()}] Telegram 告警发送成功: {config_name} - {level_text}")
             return True
         else:
             print(f"[{get_beijing_now_str()}] Telegram 告警发送失败: {response.text}")
@@ -176,7 +203,7 @@ def send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp
 
 
 def check_volume_alert(symbol, config, state):
-    """检查成交量并发送告警"""
+    """检查成交量并发送告警（支持双阈值）"""
     if not config.get('enabled', False):
         return
     
@@ -185,33 +212,52 @@ def check_volume_alert(symbol, config, state):
         return
     
     timestamp, volume, price = result
-    threshold = config['threshold']
     config_name = config['name']
     
-    # 检查是否超过阈值
-    if volume > threshold:
-        # 检查是否已经为这个时间点发送过告警
-        state_key = f"{symbol}_{timestamp}"
+    # 获取双阈值配置（兼容旧配置）
+    threshold_v1 = config.get('threshold_v1', config.get('threshold', 0))
+    threshold_v2_min = config.get('threshold_v2_min', 0)
+    threshold_v2_max = config.get('threshold_v2_max', threshold_v1)
+    
+    # 确定触发的阈值级别
+    alert_level = None
+    alert_threshold = None
+    
+    if volume > threshold_v1:
+        # V1阈值：大于V1
+        alert_level = 'V1'
+        alert_threshold = threshold_v1
+    elif threshold_v2_min < volume <= threshold_v2_max:
+        # V2阈值：大于V2_min且小于等于V2_max
+        alert_level = 'V2'
+        alert_threshold = f"{threshold_v2_min/1_000_000:.0f}M - {threshold_v2_max/1_000_000:.0f}M"
+    
+    # 如果触发了告警
+    if alert_level:
+        # 检查是否已经为这个时间点和级别发送过告警
+        state_key = f"{symbol}_{timestamp}_{alert_level}"
         if state_key not in state:
-            print(f"[{get_beijing_now_str()}] {config_name} 成交量超过阈值: ${volume:,.0f} > ${threshold:,.0f}")
+            volume_m = volume / 1_000_000
+            print(f"[{get_beijing_now_str()}] {config_name} 触发 {alert_level} 阈值: {volume_m:.2f}M")
             
             # 发送告警
-            if send_telegram_alert(symbol, config_name, volume, threshold, price, timestamp):
+            if send_telegram_alert(symbol, config_name, volume, alert_level, alert_threshold, price, timestamp):
                 # 记录已发送
                 state[state_key] = {
                     'timestamp': timestamp,
                     'volume': volume,
                     'price': price,
+                    'level': alert_level,
                     'alert_time': get_beijing_now_str()
                 }
                 save_state(state)
     
-    # 记录最新数据到 JSONL
-    record_volume_data(symbol, timestamp, volume, price, threshold)
+    # 记录最新数据到 JSONL（包含双阈值信息）
+    record_volume_data(symbol, timestamp, volume, price, threshold_v1, threshold_v2_min, threshold_v2_max)
 
 
-def record_volume_data(symbol, timestamp, volume, price, threshold):
-    """记录成交量数据到 JSONL（避免重复记录同一时间戳）"""
+def record_volume_data(symbol, timestamp, volume, price, threshold_v1, threshold_v2_min, threshold_v2_max):
+    """记录成交量数据到 JSONL（支持双阈值，避免重复记录同一时间戳）"""
     try:
         beijing_date = get_beijing_now().strftime('%Y%m%d')
         jsonl_file = DATA_DIR / f'volume_{symbol.replace("-", "_")}_{beijing_date}.jsonl'
@@ -232,21 +278,32 @@ def record_volume_data(symbol, timestamp, volume, price, threshold):
             print(f"[{get_beijing_now_str()}] {symbol} K线 {timestamp} 已记录，跳过")
             return
         
+        # 判断触发的阈值级别
+        exceeded_level = None
+        if volume > threshold_v1:
+            exceeded_level = 'V1'
+        elif threshold_v2_min < volume <= threshold_v2_max:
+            exceeded_level = 'V2'
+        
         record = {
             'timestamp': timestamp,
             'datetime': datetime.fromtimestamp(timestamp / 1000 + 8*3600).strftime('%Y-%m-%d %H:%M:%S'),
             'symbol': symbol,
             'volume': volume,
             'price': price,
-            'threshold': threshold,
-            'exceeded': volume > threshold,
+            'threshold_v1': threshold_v1,
+            'threshold_v2_min': threshold_v2_min,
+            'threshold_v2_max': threshold_v2_max,
+            'exceeded': volume > threshold_v1 or (threshold_v2_min < volume <= threshold_v2_max),
+            'exceeded_level': exceeded_level,  # 'V1', 'V2', 或 None
             'recorded_at': get_beijing_now_str()
         }
         
         with open(jsonl_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(record, ensure_ascii=False) + '\n')
         
-        print(f"[{get_beijing_now_str()}] ✅ 记录 {symbol} K线数据: {record['datetime']} 成交量: {volume/1_000_000:.2f}M")
+        level_str = f" ({exceeded_level})" if exceeded_level else ""
+        print(f"[{get_beijing_now_str()}] ✅ 记录 {symbol} K线数据: {record['datetime']} 成交量: {volume/1_000_000:.2f}M{level_str}")
             
     except Exception as e:
         print(f"[{get_beijing_now_str()}] 记录成交量数据失败: {e}")

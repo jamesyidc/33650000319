@@ -5047,17 +5047,49 @@ pm2 status                                                # 查看所有进程�
                         </div>
                         
                         <div class="border-t pt-3 mb-3">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600">阈值设置</span>
+                            <div class="text-sm font-semibold text-gray-700 mb-2">阈值设置</div>
+                            
+                            <!-- V1 高阈值 -->
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="text-gray-600 flex items-center">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                    V1 大于
+                                </span>
                                 <div class="flex items-center gap-2">
                                     <input type="number" 
-                                           id="btcThreshold" 
-                                           value="100" 
+                                           id="btcThresholdV1" 
+                                           value="180" 
                                            step="1" 
                                            min="0"
                                            class="w-20 px-2 py-1 border rounded text-right"
                                            onchange="saveVolumeThreshold('BTC')">
                                     <span class="text-gray-600">M USDT</span>
+                                </div>
+                            </div>
+                            
+                            <!-- V2 中等阈值范围 -->
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600 flex items-center">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+                                    V2 范围
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" 
+                                           id="btcThresholdV2Min" 
+                                           value="100" 
+                                           step="1" 
+                                           min="0"
+                                           class="w-16 px-2 py-1 border rounded text-right text-xs"
+                                           onchange="saveVolumeThreshold('BTC')">
+                                    <span class="text-gray-500 text-xs">~</span>
+                                    <input type="number" 
+                                           id="btcThresholdV2Max" 
+                                           value="180" 
+                                           step="1" 
+                                           min="0"
+                                           class="w-16 px-2 py-1 border rounded text-right text-xs"
+                                           onchange="saveVolumeThreshold('BTC')">
+                                    <span class="text-gray-600 text-xs">M</span>
                                 </div>
                             </div>
                         </div>
@@ -5107,17 +5139,49 @@ pm2 status                                                # 查看所有进程�
                         </div>
                         
                         <div class="border-t pt-3 mb-3">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600">阈值设置</span>
+                            <div class="text-sm font-semibold text-gray-700 mb-2">阈值设置</div>
+                            
+                            <!-- V1 高阈值 -->
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="text-gray-600 flex items-center">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                    V1 大于
+                                </span>
                                 <div class="flex items-center gap-2">
                                     <input type="number" 
-                                           id="ethThreshold" 
-                                           value="50" 
+                                           id="ethThresholdV1" 
+                                           value="130" 
                                            step="1" 
                                            min="0"
                                            class="w-20 px-2 py-1 border rounded text-right"
                                            onchange="saveVolumeThreshold('ETH')">
                                     <span class="text-gray-600">M USDT</span>
+                                </div>
+                            </div>
+                            
+                            <!-- V2 中等阈值范围 -->
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600 flex items-center">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+                                    V2 范围
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" 
+                                           id="ethThresholdV2Min" 
+                                           value="50" 
+                                           step="1" 
+                                           min="0"
+                                           class="w-16 px-2 py-1 border rounded text-right text-xs"
+                                           onchange="saveVolumeThreshold('ETH')">
+                                    <span class="text-gray-500 text-xs">~</span>
+                                    <input type="number" 
+                                           id="ethThresholdV2Max" 
+                                           value="130" 
+                                           step="1" 
+                                           min="0"
+                                           class="w-16 px-2 py-1 border rounded text-right text-xs"
+                                           onchange="saveVolumeThreshold('ETH')">
+                                    <span class="text-gray-600 text-xs">M</span>
                                 </div>
                             </div>
                         </div>
@@ -5144,13 +5208,15 @@ pm2 status                                                # 查看所有进程�
                 <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-600">
                     <div class="font-semibold mb-2 flex items-center">
                         <i class="fas fa-info-circle mr-2"></i>
-                        监控说明
+                        监控说明（双阈值系统）
                     </div>
                     <ul class="list-disc list-inside space-y-1 ml-4">
                         <li>监控 OKX 上 BTC-USDT-SWAP 和 ETH-USDT-SWAP 的 5 分钟成交量</li>
-                        <li>当成交量超过设定阈值时，会通过 Telegram 发送通知</li>
-                        <li>每 5 分钟自动检查一次，15 分钟内不重复发送相同通知</li>
-                        <li>可随时调整阈值或启用/禁用监控（单位：M = 百万 USDT）</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1"></span><strong>V1 阈值</strong>：成交量大于此值时触发高级别告警</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-1"></span><strong>V2 阈值范围</strong>：成交量在此范围内触发中等级别告警</li>
+                        <li>要求：V1 必须大于 V2_max，V2_min 必须小于 V2_max</li>
+                        <li>每 5 分钟自动检查一次，同一时间点同一级别不重复发送通知</li>
+                        <li>可随时调整双阈值或启用/禁用监控（单位：M = 百万 USDT）</li>
                     </ul>
                 </div>
                 
@@ -16294,15 +16360,29 @@ pm2 status                                                # 查看所有进程�
                             btc.volume_base.toLocaleString() + ' BTC';
                         document.getElementById('btcVolumeTime').textContent = 
                             '更新: ' + new Date(btc.timestamp).toLocaleTimeString();
-                        document.getElementById('btcThreshold').value = 
-                            btc.threshold / 1_000_000;
+                        
+                        // 更新双阈值输入框
+                        document.getElementById('btcThresholdV1').value = 
+                            (btc.threshold_v1 || btc.threshold || 180_000_000) / 1_000_000;
+                        document.getElementById('btcThresholdV2Min').value = 
+                            (btc.threshold_v2_min || 100_000_000) / 1_000_000;
+                        document.getElementById('btcThresholdV2Max').value = 
+                            (btc.threshold_v2_max || 180_000_000) / 1_000_000;
+                        
                         document.getElementById('btcVolumeEnabled').checked = btc.enabled;
                         
-                        // 更新状态
+                        // 更新状态（基于V1阈值和V2范围）
                         const btcStatus = document.getElementById('btcVolumeStatus');
-                        if (btc.volume_usdt > btc.threshold) {
-                            btcStatus.textContent = '⚠️ 超阈值';
+                        const v1 = btc.threshold_v1 || btc.threshold || 180_000_000;
+                        const v2_min = btc.threshold_v2_min || 100_000_000;
+                        const v2_max = btc.threshold_v2_max || 180_000_000;
+                        
+                        if (btc.volume_usdt > v1) {
+                            btcStatus.textContent = '🔴 V1超阈值';
                             btcStatus.className = 'text-xs px-2 py-1 rounded-full bg-red-500 text-white font-bold animate-pulse';
+                        } else if (btc.volume_usdt > v2_min && btc.volume_usdt <= v2_max) {
+                            btcStatus.textContent = '🟡 V2区间';
+                            btcStatus.className = 'text-xs px-2 py-1 rounded-full bg-yellow-500 text-white font-bold';
                         } else {
                             btcStatus.textContent = '✓ 正常';
                             btcStatus.className = 'text-xs px-2 py-1 rounded-full bg-green-500 text-white';
@@ -16318,15 +16398,29 @@ pm2 status                                                # 查看所有进程�
                             eth.volume_base.toLocaleString() + ' ETH';
                         document.getElementById('ethVolumeTime').textContent = 
                             '更新: ' + new Date(eth.timestamp).toLocaleTimeString();
-                        document.getElementById('ethThreshold').value = 
-                            eth.threshold / 1_000_000;
+                        
+                        // 更新双阈值输入框
+                        document.getElementById('ethThresholdV1').value = 
+                            (eth.threshold_v1 || eth.threshold || 130_000_000) / 1_000_000;
+                        document.getElementById('ethThresholdV2Min').value = 
+                            (eth.threshold_v2_min || 50_000_000) / 1_000_000;
+                        document.getElementById('ethThresholdV2Max').value = 
+                            (eth.threshold_v2_max || 130_000_000) / 1_000_000;
+                        
                         document.getElementById('ethVolumeEnabled').checked = eth.enabled;
                         
-                        // 更新状态
+                        // 更新状态（基于V1阈值和V2范围）
                         const ethStatus = document.getElementById('ethVolumeStatus');
-                        if (eth.volume_usdt > eth.threshold) {
-                            ethStatus.textContent = '⚠️ 超阈值';
+                        const v1 = eth.threshold_v1 || eth.threshold || 130_000_000;
+                        const v2_min = eth.threshold_v2_min || 50_000_000;
+                        const v2_max = eth.threshold_v2_max || 130_000_000;
+                        
+                        if (eth.volume_usdt > v1) {
+                            ethStatus.textContent = '🔴 V1超阈值';
                             ethStatus.className = 'text-xs px-2 py-1 rounded-full bg-red-500 text-white font-bold animate-pulse';
+                        } else if (eth.volume_usdt > v2_min && eth.volume_usdt <= v2_max) {
+                            ethStatus.textContent = '🟡 V2区间';
+                            ethStatus.className = 'text-xs px-2 py-1 rounded-full bg-yellow-500 text-white font-bold';
                         } else {
                             ethStatus.textContent = '✓ 正常';
                             ethStatus.className = 'text-xs px-2 py-1 rounded-full bg-green-500 text-white';
@@ -16591,10 +16685,24 @@ pm2 status                                                # 查看所有进程�
             }, 500);
         }
         
-        // 保存阈值设置
+        // 保存阈值设置（双阈值）
         async function saveVolumeThreshold(coin) {
-            const threshold = parseFloat(document.getElementById(`${coin.toLowerCase()}Threshold`).value);
+            const thresholdV1 = parseFloat(document.getElementById(`${coin.toLowerCase()}ThresholdV1`).value);
+            const thresholdV2Min = parseFloat(document.getElementById(`${coin.toLowerCase()}ThresholdV2Min`).value);
+            const thresholdV2Max = parseFloat(document.getElementById(`${coin.toLowerCase()}ThresholdV2Max`).value);
             const symbol = coin === 'BTC' ? 'BTC-USDT-SWAP' : 'ETH-USDT-SWAP';
+            
+            // 验证：V1 必须大于 V2 最大值
+            if (thresholdV1 <= thresholdV2Max) {
+                alert('错误：V1 阈值必须大于 V2 最大值');
+                return;
+            }
+            
+            // 验证：V2 最小值必须小于最大值
+            if (thresholdV2Min >= thresholdV2Max) {
+                alert('错误：V2 最小值必须小于最大值');
+                return;
+            }
             
             try {
                 const response = await fetch('/api/volume-monitor/config', {
@@ -16604,16 +16712,30 @@ pm2 status                                                # 查看所有进程�
                     },
                     body: JSON.stringify({
                         symbol: symbol,
-                        threshold: threshold * 1_000_000  // 转换为 USDT (M)
+                        threshold_v1: thresholdV1 * 1_000_000,  // 转换为 USDT
+                        threshold_v2_min: thresholdV2Min * 1_000_000,
+                        threshold_v2_max: thresholdV2Max * 1_000_000
                     })
                 });
                 
                 const data = await response.json();
                 if (data.success) {
-                    console.log(`${coin} 阈值已保存: ${threshold} 亿 USDT`);
+                    console.log(`${coin} 双阈值已保存:`, {
+                        V1: `> ${thresholdV1}M`,
+                        V2: `${thresholdV2Min}M ~ ${thresholdV2Max}M`
+                    });
+                    // 显示保存成功提示
+                    const statusEl = document.getElementById(`${coin.toLowerCase()}VolumeStatus`);
+                    statusEl.textContent = '✓ 已保存';
+                    statusEl.className = 'text-xs px-2 py-1 rounded-full bg-green-100 text-green-700';
+                    setTimeout(() => {
+                        statusEl.textContent = '正常';
+                        statusEl.className = 'text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700';
+                    }, 2000);
                 }
             } catch (error) {
                 console.error('保存阈值失败:', error);
+                alert('保存失败: ' + error.message);
             }
         }
         
