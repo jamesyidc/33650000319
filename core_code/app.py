@@ -34709,7 +34709,7 @@ def volume_monitor_history():
     try:
         symbol = request.args.get('symbol', 'BTC-USDT-SWAP')  # BTC-USDT-SWAP 或 ETH-USDT-SWAP
         date = request.args.get('date')  # YYYYMMDD 格式
-        limit = int(request.args.get('limit', 100))  # 返回最近N条记录
+        limit = request.args.get('limit')  # 返回最近N条记录，None表示返回全部
         
         # 如果没有指定日期，使用今天
         if not date:
@@ -34735,8 +34735,10 @@ def volume_monitor_history():
                 if line.strip():
                     records.append(json.loads(line))
         
-        # 返回最近的 limit 条记录
-        records = records[-limit:] if len(records) > limit else records
+        # 如果指定了limit，返回最近的N条记录；否则返回全部
+        if limit is not None:
+            limit = int(limit)
+            records = records[-limit:] if len(records) > limit else records
         
         return jsonify({
             'success': True,

@@ -1,14 +1,14 @@
 {
   "BTC-USDT-SWAP": {
-    "last_check": "2026-03-23 01:16:04",
-    "volume_usdt": 328160.76566,
-    "volume_billion": 0.00032816076565999995,
+    "last_check": "2026-03-23 11:57:28",
+    "volume_usdt": 6229289.47331,
+    "volume_billion": 0.00622928947331,
     "threshold_billion": 0.18
   },
   "ETH-USDT-SWAP": {
-    "last_check": "2026-03-23 01:16:04",
-    "volume_usdt": 579978.91772,
-    "volume_billion": 0.00057997891772,
+    "last_check": "2026-03-23 11:57:28",
+    "volume_usdt": 5304830.54179,
+    "volume_billion": 0.00530483054179,
     "threshold_billion": 0.13
   },
   "ETH-USDT-SWAP_1774136700000": {
@@ -82,5 +82,23 @@
     "volume": 134981137.53895,
     "price": 2074.14,
     "alert_time": "2026-03-22 19:48:53"
+  },
+  "ETH-USDT-SWAP_1774204500000": {
+    "timestamp": 1774204500000,
+    "volume": 159693788.81127,
+    "price": 2063.7,
+    "alert_time": "2026-03-23 02:41:03"
+  },
+  "BTC-USDT-SWAP_1774213500000": {
+    "timestamp": 1774213500000,
+    "volume": 276021254.16614,
+    "price": 67808.0,
+    "alert_time": "2026-03-23 05:14:34"
+  },
+  "ETH-USDT-SWAP_1774213500000": {
+    "timestamp": 1774213500000,
+    "volume": 345643571.25311,
+    "price": 2045.42,
+    "alert_time": "2026-03-23 05:14:35"
   }
 }
