@@ -4120,25 +4120,44 @@ pm2 status                                                # 查看所有进程�
         </div>
         
         <!-- 暴跌预警模块 (日线级别) -->
-        <div class="bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 rounded-lg shadow-lg p-6 mb-6 border-2 border-red-300" id="crashWarningCard">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <h2 class="text-xl font-bold flex items-center text-red-800">
-                        <i class="fas fa-exclamation-triangle text-red-600 mr-2 animate-pulse"></i>
-                        🚨 暴跌预警 (日线级别)
-                    </h2>
-                    <span id="crashWarningDateBadge" class="px-3 py-1 bg-red-600 text-white text-sm font-semibold rounded-full">--</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="toggleCrashWarningCard()" class="inline-flex items-center px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg" title="折叠/展开">
-                        <i id="crashWarningToggleIcon" class="fas fa-chevron-up"></i>
-                    </button>
-                    <button onclick="refreshCrashWarning()" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-all duration-200 shadow-md hover:shadow-lg">
-                        <i class="fas fa-sync-alt mr-1"></i>
-                        刷新预警
-                    </button>
-                </div>
+        <div class="mb-6" id="crashWarningCardContainer">
+            <!-- 完全折叠状态：只显示简洁按钮条 -->
+            <div id="crashWarningCollapsedBar" class="hidden">
+                <button onclick="toggleCrashWarningCardComplete()" class="w-full px-4 py-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg shadow-md hover:shadow-lg transition-all border-2 border-red-300 flex items-center justify-between group">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-exclamation-triangle text-red-600 animate-pulse"></i>
+                        <span class="text-base font-bold text-red-800">🚨 暴跌预警 (日线级别)</span>
+                        <span id="crashWarningDateBadgeCollapsed" class="px-2 py-0.5 bg-red-600 text-white text-xs font-semibold rounded-full">--</span>
+                        <span class="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full">点击展开</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-red-600 transition-transform group-hover:text-red-700"></i>
+                </button>
             </div>
+            
+            <!-- 完全展开状态：显示所有内容 -->
+            <div id="crashWarningExpandedCard" class="bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 rounded-lg shadow-lg p-6 border-2 border-red-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <h2 class="text-xl font-bold flex items-center text-red-800">
+                            <i class="fas fa-exclamation-triangle text-red-600 mr-2 animate-pulse"></i>
+                            🚨 暴跌预警 (日线级别)
+                        </h2>
+                        <span id="crashWarningDateBadge" class="px-3 py-1 bg-red-600 text-white text-sm font-semibold rounded-full">--</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleCrashWarningCardComplete()" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-all duration-200 shadow-md hover:shadow-lg" title="完全折叠">
+                            <i class="fas fa-compress-alt mr-1"></i>
+                            折叠
+                        </button>
+                        <button onclick="toggleCrashWarningCard()" class="inline-flex items-center px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg" title="折叠/展开内容">
+                            <i id="crashWarningToggleIcon" class="fas fa-chevron-up"></i>
+                        </button>
+                        <button onclick="refreshCrashWarning()" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                            <i class="fas fa-sync-alt mr-1"></i>
+                            刷新预警
+                        </button>
+                    </div>
+                </div>
             
             <!-- 可折叠内容区域 -->
             <div id="crashWarningContent" class="transition-all duration-300">
@@ -4385,7 +4404,8 @@ pm2 status                                                # 查看所有进程�
             </div>
             
             </div><!-- 关闭 crashWarningContent -->
-        </div>
+            </div><!-- 关闭 crashWarningExpandedCard -->
+        </div><!-- 关闭 crashWarningCardContainer -->
         
         <!-- 全时间段模式监控 (2:00-23:59) -->
         <div class="bg-white rounded-lg shadow-lg mb-6 overflow-hidden border-t-4 border-indigo-500">
@@ -7709,6 +7729,8 @@ pm2 status                                                # 查看所有进程�
         function updateCrashWarningDisplay(crashWarning, date) {
             // 更新日期标签
             document.getElementById('crashWarningDateBadge').textContent = date;
+            // 同步折叠栏的日期徽章
+            syncCrashWarningBadges();
             
             const statusDiv = document.getElementById('crashWarningStatus');
             const iconDiv = document.getElementById('crashWarningIcon');
@@ -7803,7 +7825,39 @@ pm2 status                                                # 查看所有进程�
             await loadCrashWarning();
         }
         
-        // 折叠/展开暴跌预警卡片
+        // 完全折叠/展开暴跌预警卡片
+        function toggleCrashWarningCardComplete() {
+            const collapsedBar = document.getElementById('crashWarningCollapsedBar');
+            const expandedCard = document.getElementById('crashWarningExpandedCard');
+            
+            if (collapsedBar.classList.contains('hidden')) {
+                // 完全折叠
+                collapsedBar.classList.remove('hidden');
+                expandedCard.classList.add('hidden');
+                localStorage.setItem('crashWarningCardFullyCollapsed', 'true');
+                console.log('✅ 完全折叠暴跌预警卡片');
+            } else {
+                // 完全展开
+                collapsedBar.classList.add('hidden');
+                expandedCard.classList.remove('hidden');
+                localStorage.setItem('crashWarningCardFullyCollapsed', 'false');
+                console.log('✅ 完全展开暴跌预警卡片');
+            }
+            
+            // 同步日期徽章
+            syncCrashWarningBadges();
+        }
+        
+        // 同步折叠和展开状态的日期徽章
+        function syncCrashWarningBadges() {
+            const expandedBadge = document.getElementById('crashWarningDateBadge');
+            const collapsedBadge = document.getElementById('crashWarningDateBadgeCollapsed');
+            if (expandedBadge && collapsedBadge) {
+                collapsedBadge.textContent = expandedBadge.textContent;
+            }
+        }
+        
+        // 折叠/展开暴跌预警卡片内容
         function toggleCrashWarningCard() {
             const content = document.getElementById('crashWarningContent');
             const icon = document.getElementById('crashWarningToggleIcon');
@@ -7814,19 +7868,34 @@ pm2 status                                                # 查看所有进程�
                 icon.classList.remove('fa-chevron-down');
                 icon.classList.add('fa-chevron-up');
                 localStorage.setItem('crashWarningCardCollapsed', 'false');
-                console.log('✅ 展开暴跌预警卡片');
+                console.log('✅ 展开暴跌预警卡片内容');
             } else {
                 // 折叠
                 content.style.display = 'none';
                 icon.classList.remove('fa-chevron-up');
                 icon.classList.add('fa-chevron-down');
                 localStorage.setItem('crashWarningCardCollapsed', 'true');
-                console.log('✅ 折叠暴跌预警卡片');
+                console.log('✅ 折叠暴跌预警卡片内容');
             }
         }
         
         // 初始化暴跌预警卡片状态（从localStorage恢复）
         function initCrashWarningCardState() {
+            // 1. 恢复完全折叠状态
+            const isFullyCollapsed = localStorage.getItem('crashWarningCardFullyCollapsed') === 'true';
+            const collapsedBar = document.getElementById('crashWarningCollapsedBar');
+            const expandedCard = document.getElementById('crashWarningExpandedCard');
+            
+            if (isFullyCollapsed) {
+                collapsedBar.classList.remove('hidden');
+                expandedCard.classList.add('hidden');
+                console.log('🔄 恢复暴跌预警卡片为完全折叠状态');
+            } else {
+                collapsedBar.classList.add('hidden');
+                expandedCard.classList.remove('hidden');
+            }
+            
+            // 2. 恢复内容折叠状态
             const isCollapsed = localStorage.getItem('crashWarningCardCollapsed') === 'true';
             const content = document.getElementById('crashWarningContent');
             const icon = document.getElementById('crashWarningToggleIcon');
