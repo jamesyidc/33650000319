@@ -34222,9 +34222,16 @@ def get_available_aggregated_types():
 def get_sentiment_change_stats():
     """获取2小时内看多/看空增加统计
     
-    统计逻辑：
-    - 看多增加：币种从下跌转为上涨的次数（change_pct从负数变为正数或从负数变为0）
-    - 看空增加：币种从上涨转为下跌的次数（change_pct从正数或0变为负数）
+    统计逻辑（类似SAR统计）：
+    - 看多币种：当前涨跌幅 > 0 的币种数量
+    - 看空币种：当前涨跌幅 < 0 的币种数量
+    - 看多增加：现在看多数量 - 2小时前看多数量（正值表示增加）
+    - 看空增加：现在看空数量 - 2小时前看空数量（正值表示增加）
+    
+    示例：
+    - 2小时前：10个看多，17个看空
+    - 现在：15个看多，12个看空
+    - 结果：看多增加5，看空减少5（不显示负值，显示0）
     """
     try:
         from datetime import datetime, timezone, timedelta
@@ -34246,67 +34253,80 @@ def get_sentiment_change_stats():
                 'error': f'数据文件不存在: {date_str}'
             }), 404
         
-        # 读取最近2小时的数据
-        two_hours_ago_ms = (beijing_now - timedelta(hours=2)).timestamp() * 1000
-        
-        records = []
+        # 读取所有今天的数据
+        all_records = []
         with open(data_file, 'r', encoding='utf-8') as f:
             for line in f:
                 if not line.strip():
                     continue
                 try:
                     record = json.loads(line.strip())
-                    timestamp = record.get('timestamp', 0)
-                    if timestamp >= two_hours_ago_ms:
-                        records.append(record)
+                    all_records.append(record)
                 except:
                     continue
         
-        if len(records) < 2:
+        if len(all_records) < 2:
             return jsonify({
                 'success': True,
                 'long_increase': 0,
                 'short_increase': 0,
+                'current_long': 0,
+                'current_short': 0,
+                'previous_long': 0,
+                'previous_short': 0,
                 'window_hours': 2,
-                'records_count': len(records),
                 'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S')
             })
         
-        # 统计每个币种的情绪变化
-        long_increase_count = 0  # 看多增加次数
-        short_increase_count = 0  # 看空增加次数
+        # 获取最新记录（当前状态）
+        current_record = all_records[-1]
+        current_changes = current_record.get('changes', {})
         
-        # 遍历相邻记录，检测情绪变化
-        for i in range(1, len(records)):
-            prev_record = records[i-1]
-            curr_record = records[i]
-            
-            prev_changes = prev_record.get('changes', {})
-            curr_changes = curr_record.get('changes', {})
-            
-            # 遍历每个币种
-            for symbol in curr_changes.keys():
-                if symbol not in prev_changes:
-                    continue
-                
-                prev_pct = prev_changes[symbol].get('change_pct', 0)
-                curr_pct = curr_changes[symbol].get('change_pct', 0)
-                
-                # 检测看多增加：从负数变为正数或0
-                if prev_pct < 0 and curr_pct >= 0:
-                    long_increase_count += 1
-                
-                # 检测看空增加：从正数或0变为负数
-                if prev_pct >= 0 and curr_pct < 0:
-                    short_increase_count += 1
+        # 统计当前看多/看空数量
+        current_long_count = sum(1 for symbol, data in current_changes.items() if data.get('change_pct', 0) > 0)
+        current_short_count = sum(1 for symbol, data in current_changes.items() if data.get('change_pct', 0) < 0)
+        
+        # 查找2小时前的记录
+        current_timestamp = current_record.get('timestamp', 0)
+        two_hours_ago_ms = current_timestamp - (2 * 60 * 60 * 1000)
+        
+        # 找到最接近2小时前的记录
+        previous_record = None
+        min_diff = float('inf')
+        
+        for record in all_records:
+            timestamp = record.get('timestamp', 0)
+            if timestamp <= two_hours_ago_ms:
+                diff = abs(timestamp - two_hours_ago_ms)
+                if diff < min_diff:
+                    min_diff = diff
+                    previous_record = record
+        
+        if previous_record is None:
+            # 如果没有2小时前的数据，使用第一条记录
+            previous_record = all_records[0]
+        
+        # 统计2小时前看多/看空数量
+        previous_changes = previous_record.get('changes', {})
+        previous_long_count = sum(1 for symbol, data in previous_changes.items() if data.get('change_pct', 0) > 0)
+        previous_short_count = sum(1 for symbol, data in previous_changes.items() if data.get('change_pct', 0) < 0)
+        
+        # 计算增加量（只显示正值，负值显示为0）
+        long_increase = max(0, current_long_count - previous_long_count)
+        short_increase = max(0, current_short_count - previous_short_count)
         
         return jsonify({
             'success': True,
-            'long_increase': long_increase_count,
-            'short_increase': short_increase_count,
+            'long_increase': long_increase,
+            'short_increase': short_increase,
+            'current_long': current_long_count,
+            'current_short': current_short_count,
+            'previous_long': previous_long_count,
+            'previous_short': previous_short_count,
             'window_hours': 2,
-            'records_count': len(records),
-            'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S')
+            'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S'),
+            'current_time': current_record.get('beijing_time', ''),
+            'previous_time': previous_record.get('beijing_time', '')
         })
         
     except Exception as e:
