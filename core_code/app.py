@@ -34220,18 +34220,17 @@ def get_available_aggregated_types():
 
 @app.route('/api/coin-change-tracker/sentiment-change-stats', methods=['GET'])
 def get_sentiment_change_stats():
-    """获取2小时内看多/看空增加统计
+    """获取2小时内看多/看空增加统计（基于SAR偏向数据）
     
-    统计逻辑（类似SAR统计）：
-    - 看多币种：当前涨跌幅 > 0 的币种数量
-    - 看空币种：当前涨跌幅 < 0 的币种数量
-    - 看多增加：现在看多数量 - 2小时前看多数量（正值表示增加）
-    - 看空增加：现在看空数量 - 2小时前看空数量（正值表示增加）
+    统计逻辑：
+    - 从SAR偏向统计数据中读取看多/看空币种数量
+    - 看多增加：现在SAR看多数 - 2小时前SAR看多数（正值表示增加）
+    - 看空增加：现在SAR看空数 - 2小时前SAR看空数（正值表示增加）
     
     示例：
-    - 2小时前：10个看多，17个看空
-    - 现在：15个看多，12个看空
-    - 结果：看多增加5，看空减少5（不显示负值，显示0）
+    - 2小时前：10个SAR看多，9个SAR看空
+    - 现在：10个SAR看多，9个SAR看空
+    - 结果：看多增加0，看空增加0
     """
     try:
         from datetime import datetime, timezone, timedelta
@@ -34243,17 +34242,17 @@ def get_sentiment_change_stats():
         beijing_now = datetime.now(beijing_tz)
         date_str = beijing_now.strftime('%Y%m%d')
         
-        # 读取今天的数据文件
-        data_dir = Path('/home/user/webapp/data/coin_change_tracker')
-        data_file = data_dir / f'coin_change_{date_str}.jsonl'
+        # 读取SAR数据文件
+        data_dir = Path('/home/user/webapp/data/sar_bias_stats')
+        data_file = data_dir / f'bias_stats_{date_str}.jsonl'
         
         if not data_file.exists():
             return jsonify({
                 'success': False,
-                'error': f'数据文件不存在: {date_str}'
+                'error': f'SAR数据文件不存在: {date_str}'
             }), 404
         
-        # 读取所有今天的数据
+        # 读取所有今天的SAR数据
         all_records = []
         with open(data_file, 'r', encoding='utf-8') as f:
             for line in f:
@@ -34280,11 +34279,8 @@ def get_sentiment_change_stats():
         
         # 获取最新记录（当前状态）
         current_record = all_records[-1]
-        current_changes = current_record.get('changes', {})
-        
-        # 统计当前看多/看空数量
-        current_long_count = sum(1 for symbol, data in current_changes.items() if data.get('change_pct', 0) > 0)
-        current_short_count = sum(1 for symbol, data in current_changes.items() if data.get('change_pct', 0) < 0)
+        current_long_count = current_record.get('bullish_count', 0)
+        current_short_count = current_record.get('bearish_count', 0)
         
         # 查找2小时前的记录
         current_timestamp = current_record.get('timestamp', 0)
@@ -34307,13 +34303,19 @@ def get_sentiment_change_stats():
             previous_record = all_records[0]
         
         # 统计2小时前看多/看空数量
-        previous_changes = previous_record.get('changes', {})
-        previous_long_count = sum(1 for symbol, data in previous_changes.items() if data.get('change_pct', 0) > 0)
-        previous_short_count = sum(1 for symbol, data in previous_changes.items() if data.get('change_pct', 0) < 0)
+        previous_long_count = previous_record.get('bullish_count', 0)
+        previous_short_count = previous_record.get('bearish_count', 0)
         
         # 计算增加量（只显示正值，负值显示为0）
         long_increase = max(0, current_long_count - previous_long_count)
         short_increase = max(0, current_short_count - previous_short_count)
+        
+        # 格式化时间戳
+        def format_timestamp(ts):
+            if isinstance(ts, (int, float)):
+                from datetime import datetime
+                return datetime.fromtimestamp(ts / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            return str(ts)
         
         return jsonify({
             'success': True,
@@ -34325,8 +34327,8 @@ def get_sentiment_change_stats():
             'previous_short': previous_short_count,
             'window_hours': 2,
             'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S'),
-            'current_time': current_record.get('beijing_time', ''),
-            'previous_time': previous_record.get('beijing_time', '')
+            'current_time': format_timestamp(current_record.get('timestamp', '')),
+            'previous_time': format_timestamp(previous_record.get('timestamp', ''))
         })
         
     except Exception as e:
