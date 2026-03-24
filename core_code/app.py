@@ -34952,6 +34952,135 @@ def volume_monitor_dates():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/volume-monitor/daily-stats', methods=['GET'])
+def volume_monitor_daily_stats():
+    """获取成交量每日统计数据（V1/V2次数统计）
+    
+    后台API计算，避免依赖前端浏览器
+    
+    参数:
+        symbol: 交易对 (BTC-USDT-SWAP 或 ETH-USDT-SWAP)
+        date: 日期 (YYYYMMDD格式，默认今天)
+    
+    返回:
+        success: 是否成功
+        symbol: 交易对
+        date: 日期
+        v1_count: V1阈值触发次数（红色高阈值）
+        v2_count: V2阈值触发次数（黄色中等阈值）
+        total_exceeded: 总超过次数（V1 + V2）
+        total_records: 总记录数
+        threshold_v1: 当前V1阈值
+        threshold_v2_min: 当前V2最小值
+        threshold_v2_max: 当前V2最大值
+    """
+    try:
+        from datetime import datetime, timezone, timedelta
+        
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')
+        date = request.args.get('date')
+        
+        # 如果没有指定日期，使用今天
+        if not date:
+            beijing_time = datetime.now(timezone(timedelta(hours=8)))
+            date = beijing_time.strftime('%Y%m%d')
+        
+        # 构建文件路径
+        data_dir = Path('data/volume_monitor')
+        symbol_file = symbol.replace('-', '_')
+        jsonl_file = data_dir / f'volume_{symbol_file}_{date}.jsonl'
+        
+        if not jsonl_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date}'
+            })
+        
+        # 读取所有记录
+        records = []
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        records.append(json.loads(line))
+                    except:
+                        continue
+        
+        if not records:
+            return jsonify({
+                'success': True,
+                'symbol': symbol,
+                'date': date,
+                'v1_count': 0,
+                'v2_count': 0,
+                'total_exceeded': 0,
+                'total_records': 0
+            })
+        
+        # 从最新记录中获取阈值配置
+        latest_record = records[-1]
+        threshold_v1 = latest_record.get('threshold_v1', 0)
+        threshold_v2_min = latest_record.get('threshold_v2_min', 0)
+        threshold_v2_max = latest_record.get('threshold_v2_max', 0)
+        
+        # 如果没有双阈值配置，使用默认值
+        if threshold_v1 == 0:
+            if 'BTC' in symbol:
+                threshold_v1 = 180_000_000
+                threshold_v2_min = 100_000_000
+                threshold_v2_max = 180_000_000
+            else:  # ETH
+                threshold_v1 = 130_000_000
+                threshold_v2_min = 50_000_000
+                threshold_v2_max = 130_000_000
+        
+        # 统计 V1 和 V2 次数
+        v1_count = 0
+        v2_count = 0
+        
+        for record in records:
+            if record.get('exceeded'):
+                # 优先使用 exceeded_level 字段（新数据）
+                exceeded_level = record.get('exceeded_level')
+                if exceeded_level == 'V1':
+                    v1_count += 1
+                elif exceeded_level == 'V2':
+                    v2_count += 1
+                else:
+                    # 旧数据没有 exceeded_level，根据成交量判断
+                    volume = record.get('volume', 0)
+                    if volume > threshold_v1:
+                        v1_count += 1
+                    elif threshold_v2_min < volume <= threshold_v2_max:
+                        v2_count += 1
+        
+        total_exceeded = v1_count + v2_count
+        total_records = len(records)
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'date': date,
+            'v1_count': v1_count,
+            'v2_count': v2_count,
+            'total_exceeded': total_exceeded,
+            'total_records': total_records,
+            'threshold_v1': threshold_v1,
+            'threshold_v2_min': threshold_v2_min,
+            'threshold_v2_max': threshold_v2_max,
+            'last_update': latest_record.get('datetime', ''),
+            'timestamp': latest_record.get('timestamp', 0)
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 
