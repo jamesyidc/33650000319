@@ -34223,22 +34223,23 @@ def get_sentiment_change_stats():
     """获取2小时内看多/看空增加统计（基于SAR偏向数据）
     
     统计逻辑：
-    - 从SAR偏向统计数据中读取看多/看空币种数量
-    - 看多增加：现在SAR看多数 - 2小时前SAR看多数（正值表示增加）
-    - 看空增加：现在SAR看空数 - 2小时前SAR看空数（正值表示增加）
+    - 统计过去2小时窗口内，有多少个时间点出现了SAR看多/看空信号
+    - 看多增加：当前2小时窗口内看多点数 - 前2小时窗口内看多点数
+    - 看空增加：当前2小时窗口内看空点数 - 前2小时窗口内看空点数
     
     示例：
-    - 2小时前：10个SAR看多，9个SAR看空
-    - 现在：10个SAR看多，9个SAR看空
-    - 结果：看多增加0，看空增加0
+    - 前2小时窗口(15:39-17:39)：0个时间点有看空信号
+    - 当前2小时窗口(17:39-19:39)：2个时间点有看空信号(19:25, 19:30)
+    - 结果：看空增加 = 2 - 0 = 2
     """
     try:
         from datetime import datetime, timezone, timedelta
         from pathlib import Path
         import json
+        import pytz
         
         # 获取当前北京时间
-        beijing_tz = timezone(timedelta(hours=8))
+        beijing_tz = pytz.timezone('Asia/Shanghai')
         beijing_now = datetime.now(beijing_tz)
         date_str = beijing_now.strftime('%Y%m%d')
         
@@ -34260,7 +34261,8 @@ def get_sentiment_change_stats():
                     continue
                 try:
                     record = json.loads(line.strip())
-                    all_records.append(record)
+                    if record.get('timestamp'):
+                        all_records.append(record)
                 except:
                     continue
         
@@ -34277,58 +34279,52 @@ def get_sentiment_change_stats():
                 'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S')
             })
         
-        # 获取最新记录（当前状态）
-        current_record = all_records[-1]
-        current_long_count = current_record.get('bullish_count', 0)
-        current_short_count = current_record.get('bearish_count', 0)
+        # 定义时间窗口
+        two_hours_ago = beijing_now - timedelta(hours=2)
+        four_hours_ago = beijing_now - timedelta(hours=4)
         
-        # 查找2小时前的记录
-        current_timestamp = current_record.get('timestamp', 0)
-        two_hours_ago_ms = current_timestamp - (2 * 60 * 60 * 1000)
-        
-        # 找到最接近2小时前的记录
-        previous_record = None
-        min_diff = float('inf')
+        # 统计当前2小时窗口和前2小时窗口内的看多/看空点数
+        current_bullish_points = 0
+        current_bearish_points = 0
+        previous_bullish_points = 0
+        previous_bearish_points = 0
         
         for record in all_records:
-            timestamp = record.get('timestamp', 0)
-            if timestamp <= two_hours_ago_ms:
-                diff = abs(timestamp - two_hours_ago_ms)
-                if diff < min_diff:
-                    min_diff = diff
-                    previous_record = record
-        
-        if previous_record is None:
-            # 如果没有2小时前的数据，使用第一条记录
-            previous_record = all_records[0]
-        
-        # 统计2小时前看多/看空数量
-        previous_long_count = previous_record.get('bullish_count', 0)
-        previous_short_count = previous_record.get('bearish_count', 0)
+            timestamp_ms = record.get('timestamp', 0)
+            record_time = datetime.fromtimestamp(timestamp_ms / 1000, tz=beijing_tz)
+            bullish_count = record.get('bullish_count', 0)
+            bearish_count = record.get('bearish_count', 0)
+            
+            # 当前2小时窗口
+            if two_hours_ago <= record_time <= beijing_now:
+                if bullish_count > 0:
+                    current_bullish_points += 1
+                if bearish_count > 0:
+                    current_bearish_points += 1
+            
+            # 前2小时窗口（2-4小时前）
+            elif four_hours_ago <= record_time < two_hours_ago:
+                if bullish_count > 0:
+                    previous_bullish_points += 1
+                if bearish_count > 0:
+                    previous_bearish_points += 1
         
         # 计算增加量（只显示正值，负值显示为0）
-        long_increase = max(0, current_long_count - previous_long_count)
-        short_increase = max(0, current_short_count - previous_short_count)
-        
-        # 格式化时间戳
-        def format_timestamp(ts):
-            if isinstance(ts, (int, float)):
-                from datetime import datetime
-                return datetime.fromtimestamp(ts / 1000).strftime('%Y-%m-%d %H:%M:%S')
-            return str(ts)
+        long_increase = max(0, current_bullish_points - previous_bullish_points)
+        short_increase = max(0, current_bearish_points - previous_bearish_points)
         
         return jsonify({
             'success': True,
             'long_increase': long_increase,
             'short_increase': short_increase,
-            'current_long': current_long_count,
-            'current_short': current_short_count,
-            'previous_long': previous_long_count,
-            'previous_short': previous_short_count,
+            'current_long': current_bullish_points,
+            'current_short': current_bearish_points,
+            'previous_long': previous_bullish_points,
+            'previous_short': previous_bearish_points,
             'window_hours': 2,
             'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S'),
-            'current_time': format_timestamp(current_record.get('timestamp', '')),
-            'previous_time': format_timestamp(previous_record.get('timestamp', ''))
+            'current_time': two_hours_ago.strftime('%Y-%m-%d %H:%M:%S') + ' - ' + beijing_now.strftime('%H:%M:%S'),
+            'previous_time': four_hours_ago.strftime('%Y-%m-%d %H:%M:%S') + ' - ' + two_hours_ago.strftime('%H:%M:%S')
         })
         
     except Exception as e:
