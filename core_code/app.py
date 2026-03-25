@@ -35298,6 +35298,163 @@ def consolidation_monitor_history():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/consolidation-monitor/dates', methods=['GET'])
+def consolidation_monitor_dates():
+    """获取指定币种的可用日期列表"""
+    try:
+        from datetime import datetime
+        import re
+        
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')
+        data_dir = Path('data/consolidation_monitor')
+        
+        if not data_dir.exists():
+            return jsonify({
+                'success': True,
+                'symbol': symbol,
+                'dates': [],
+                'count': 0
+            })
+        
+        # 查找符合格式的文件：consolidation_{symbol}_{YYYYMMDD}.jsonl
+        symbol_normalized = symbol.replace('-', '_')
+        pattern = f'consolidation_{symbol_normalized}_*.jsonl'
+        
+        dates = []
+        for file_path in data_dir.glob(pattern):
+            filename = file_path.name
+            # 提取日期部分：consolidation_BTC_USDT_SWAP_20260325.jsonl -> 20260325
+            match = re.search(r'(\d{8})\.jsonl$', filename)
+            if match:
+                date_str = match.group(1)
+                # 格式化为 YYYY-MM-DD
+                try:
+                    dt = datetime.strptime(date_str, '%Y%m%d')
+                    formatted_date = dt.strftime('%Y-%m-%d')
+                    dates.append({
+                        'date': date_str,
+                        'formatted': formatted_date,
+                        'file': filename
+                    })
+                except:
+                    continue
+        
+        # 按日期降序排序（最新的在前）
+        dates.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'count': len(dates),
+            'dates': dates
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/consolidation-monitor/stats', methods=['GET'])
+def consolidation_monitor_stats():
+    """获取横盘监控的统计分析数据"""
+    try:
+        from datetime import datetime, timezone, timedelta
+        
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')
+        date = request.args.get('date')
+        
+        # 如果没有指定日期，使用今天
+        if not date:
+            beijing_tz = timezone(timedelta(hours=8))
+            beijing_now = datetime.now(beijing_tz)
+            date = beijing_now.strftime('%Y%m%d')
+        
+        data_dir = Path('data/consolidation_monitor')
+        jsonl_file = data_dir / f'consolidation_{symbol.replace("-", "_")}_{date}.jsonl'
+        
+        if not jsonl_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date}'
+            })
+        
+        # 读取数据
+        records = []
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        records.append(json.loads(line))
+                    except:
+                        continue
+        
+        if not records:
+            return jsonify({
+                'success': False,
+                'error': '没有数据记录'
+            })
+        
+        # 统计分析
+        total_count = len(records)
+        consolidation_count = sum(1 for r in records if r.get('is_consolidation'))
+        consolidation_ratio = consolidation_count / total_count if total_count > 0 else 0
+        
+        # 找出所有告警时刻（连续≥3次）
+        alert_moments = []
+        for i, rec in enumerate(records):
+            if rec.get('consecutive_count', 0) >= 3:
+                # 检查是否是刚达到3的时刻
+                if i == 0 or records[i-1].get('consecutive_count', 0) < 3:
+                    alert_moments.append({
+                        'timestamp': rec.get('timestamp'),
+                        'datetime': rec.get('datetime'),
+                        'consecutive_count': rec.get('consecutive_count'),
+                        'change_percent_display': rec.get('change_percent_display')
+                    })
+        
+        # 计算最大连续横盘次数
+        max_consecutive = max((r.get('consecutive_count', 0) for r in records), default=0)
+        
+        # 计算平均涨跌幅（绝对值）
+        changes = [abs(r.get('change_percent', 0)) for r in records if 'change_percent' in r]
+        avg_change = sum(changes) / len(changes) if changes else 0
+        
+        # 价格范围
+        prices = [r.get('price', 0) for r in records if 'price' in r]
+        min_price = min(prices) if prices else 0
+        max_price = max(prices) if prices else 0
+        
+        # 时间范围
+        first_time = records[0].get('datetime') if records else None
+        last_time = records[-1].get('datetime') if records else None
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'date': date,
+            'stats': {
+                'total_count': total_count,
+                'consolidation_count': consolidation_count,
+                'consolidation_ratio': round(consolidation_ratio * 100, 2),
+                'max_consecutive': max_consecutive,
+                'alert_count': len(alert_moments),
+                'avg_change_percent': round(avg_change * 100, 3),
+                'price_range': {
+                    'min': min_price,
+                    'max': max_price,
+                    'diff': max_price - min_price
+                },
+                'time_range': {
+                    'first': first_time,
+                    'last': last_time
+                }
+            },
+            'alert_moments': alert_moments
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 
