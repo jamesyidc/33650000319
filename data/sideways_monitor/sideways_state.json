@@ -1,0 +1,58 @@
+{
+  "BTC-USDT-SWAP": {
+    "consecutive_count": 2,
+    "last_alert_time": null,
+    "recent_candles": [
+      {
+        "timestamp": 1774413300000,
+        "datetime": "2026-03-25 12:35:00",
+        "open": 70742.0,
+        "high": 70775.4,
+        "low": 70708.8,
+        "close": 70735.1,
+        "volume": 11011313.37505,
+        "change_pct": -0.009753753074544371,
+        "abs_change_pct": 0.009753753074544371
+      },
+      {
+        "timestamp": 1774413600000,
+        "datetime": "2026-03-25 12:40:00",
+        "open": 70735.2,
+        "high": 70799.1,
+        "low": 70735.2,
+        "close": 70743.8,
+        "volume": 7010178.3216,
+        "change_pct": 0.012158020335004101,
+        "abs_change_pct": 0.012158020335004101
+      }
+    ]
+  },
+  "ETH-USDT-SWAP": {
+    "consecutive_count": 2,
+    "last_alert_time": null,
+    "recent_candles": [
+      {
+        "timestamp": 1774413300000,
+        "datetime": "2026-03-25 12:35:00",
+        "open": 2160.56,
+        "high": 2161.31,
+        "low": 2158.77,
+        "close": 2159.82,
+        "volume": 13941049.45455,
+        "change_pct": -0.034250379531222536,
+        "abs_change_pct": 0.034250379531222536
+      },
+      {
+        "timestamp": 1774413600000,
+        "datetime": "2026-03-25 12:40:00",
+        "open": 2159.82,
+        "high": 2161.4,
+        "low": 2159.18,
+        "close": 2159.59,
+        "volume": 6105604.19756,
+        "change_pct": -0.010649035567779639,
+        "abs_change_pct": 0.010649035567779639
+      }
+    ]
+  }
+}

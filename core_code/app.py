@@ -35081,6 +35081,105 @@ def volume_monitor_daily_stats():
         }), 500
 
 
+@app.route('/api/sideways-monitor/status', methods=['GET'])
+def sideways_monitor_status():
+    """获取横盘监控状态
+    
+    返回BTC和ETH当前的横盘连续次数
+    """
+    try:
+        from pathlib import Path
+        
+        state_file = Path('/home/user/webapp/data/sideways_monitor/sideways_state.json')
+        
+        if not state_file.exists():
+            return jsonify({
+                'success': True,
+                'BTC': {'consecutive_count': 0, 'last_alert_time': None},
+                'ETH': {'consecutive_count': 0, 'last_alert_time': None}
+            })
+        
+        with open(state_file, 'r', encoding='utf-8') as f:
+            state = json.load(f)
+        
+        btc_state = state.get('BTC-USDT-SWAP', {})
+        eth_state = state.get('ETH-USDT-SWAP', {})
+        
+        # 获取最近的K线数据
+        btc_recent = btc_state.get('recent_candles', [])
+        eth_recent = eth_state.get('recent_candles', [])
+        
+        btc_latest = btc_recent[-1] if btc_recent else None
+        eth_latest = eth_recent[-1] if eth_recent else None
+        
+        return jsonify({
+            'success': True,
+            'BTC': {
+                'consecutive_count': btc_state.get('consecutive_count', 0),
+                'last_alert_time': btc_state.get('last_alert_time'),
+                'latest_candle': btc_latest,
+                'threshold': 0.05
+            },
+            'ETH': {
+                'consecutive_count': eth_state.get('consecutive_count', 0),
+                'last_alert_time': eth_state.get('last_alert_time'),
+                'latest_candle': eth_latest,
+                'threshold': 0.05
+            },
+            'min_consecutive': 3
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/sideways-monitor/history', methods=['GET'])
+def sideways_monitor_history():
+    """获取横盘监控历史数据"""
+    try:
+        from datetime import datetime, timezone, timedelta
+        from pathlib import Path
+        
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')
+        date = request.args.get('date')
+        limit = request.args.get('limit')
+        
+        if not date:
+            beijing_time = datetime.now(timezone(timedelta(hours=8)))
+            date = beijing_time.strftime('%Y%m%d')
+        
+        data_dir = Path('/home/user/webapp/data/sideways_monitor')
+        symbol_file = symbol.replace('-', '_')
+        jsonl_file = data_dir / f'sideways_{symbol_file}_{date}.jsonl'
+        
+        if not jsonl_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date}'
+            })
+        
+        records = []
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    records.append(json.loads(line))
+        
+        if limit is not None:
+            limit = int(limit)
+            records = records[-limit:] if len(records) > limit else records
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'date': date,
+            'count': len(records),
+            'records': records
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 

@@ -219,5 +219,39 @@
       "date": "20260324",
       "positive_duration": 55.0
     }
+  },
+  {
+    "time": "2026-03-25 00:49:38",
+    "type": "turn_bearish",
+    "from_ratio": 67.57,
+    "to_ratio": 65.79,
+    "from_status": "bullish",
+    "to_status": "bearish",
+    "threshold": 66.21,
+    "max_ratio": 86.21,
+    "data": {
+      "ratio": 65.79,
+      "positive_count": 25,
+      "total_count": 38,
+      "date": "20260325",
+      "positive_duration": 31.2
+    }
+  },
+  {
+    "time": "2026-03-25 09:53:32",
+    "type": "turn_bullish",
+    "from_ratio": 66.17,
+    "to_ratio": 66.24,
+    "from_status": "bearish",
+    "to_status": "bullish",
+    "threshold": 66.21,
+    "max_ratio": 86.21,
+    "data": {
+      "ratio": 66.24,
+      "positive_count": 312,
+      "total_count": 471,
+      "date": "20260325",
+      "positive_duration": 390.0
+    }
   }
 ]
