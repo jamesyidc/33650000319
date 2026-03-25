@@ -12,6 +12,7 @@ sys.path.insert(0, '/home/user/webapp/escape_v2')
 
 from flask import Flask, render_template_string, render_template, request, jsonify, send_from_directory, send_file, make_response, redirect
 from flask_compress import Compress
+from flask_httpauth import HTTPBasicAuth
 import sqlite3
 from datetime import datetime, timedelta, timezone
 import json
@@ -38,6 +39,21 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # 启用gzip压缩 - 减少74KB到约15-20KB
 Compress(app)
+
+# HTTP Basic Auth 配置 - 用于备份管理器
+auth = HTTPBasicAuth()
+
+# 备份管理器的用户名和密码
+BACKUP_MANAGER_USERS = {
+    'jamesyi': 'rr123456'
+}
+
+@auth.verify_password
+def verify_password(username, password):
+    """验证用户名和密码"""
+    if username in BACKUP_MANAGER_USERS and BACKUP_MANAGER_USERS[username] == password:
+        return username
+    return None
 
 # 导入JSONL管理器
 from gdrive_jsonl_manager import GDriveJSONLManager
@@ -34675,14 +34691,16 @@ def format_file_size(bytes_size):
 
 
 @app.route('/backup-manager')
+@auth.login_required
 def backup_manager():
-    """备份管理页面"""
+    """备份管理页面 - 需要登录"""
     return render_template('backup_manager.html')
 
 
 @app.route('/api/backup/list', methods=['GET'])
+@auth.login_required
 def backup_list():
-    """获取备份文件列表"""
+    """获取备份文件列表 - 需要登录"""
     try:
         from pathlib import Path
         import os
@@ -34761,8 +34779,9 @@ def backup_list():
 
 
 @app.route('/api/backup/download/<filename>', methods=['GET'])
+@auth.login_required
 def backup_download(filename):
-    """下载备份文件"""
+    """下载备份文件 - 需要登录"""
     try:
         from pathlib import Path
         import os
