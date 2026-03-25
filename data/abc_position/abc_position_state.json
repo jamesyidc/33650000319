@@ -20,13 +20,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 0,
-      "unrealized_pnl": 0,
-      "pnl_pct": 0,
-      "position_count": 0,
+      "total_cost": 20.0337692,
+      "unrealized_pnl": -0.1521299999999665,
+      "pnl_pct": -0.76,
+      "position_count": 1,
       "account_name": "POIT",
       "okx_account": "account_poit_main",
-      "color": "none"
+      "color": "green"
     },
     "C": {
       "positions": {
@@ -63,6 +63,6 @@
     "last_update": null
   },
   "current_direction": "none",
-  "last_update": "2026-03-25T13:13:25.866824+08:00",
+  "last_update": "2026-03-25T13:15:28.567581+08:00",
   "trigger_history": []
 }

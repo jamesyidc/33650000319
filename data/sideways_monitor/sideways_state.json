@@ -1,6 +1,6 @@
 {
   "BTC-USDT-SWAP": {
-    "consecutive_count": 0,
+    "consecutive_count": 1,
     "last_alert_time": "2026-03-25T12:50:41.921164",
     "recent_candles": [
       {
@@ -79,11 +79,22 @@
         "volume": 103795634.55913,
         "change_pct": 0.32091711543856793,
         "abs_change_pct": 0.32091711543856793
+      },
+      {
+        "timestamp": 1774415400000,
+        "datetime": "2026-03-25 13:10:00",
+        "open": 71180.7,
+        "high": 71315.0,
+        "low": 71163.2,
+        "close": 71214.2,
+        "volume": 60288543.69249,
+        "change_pct": 0.047063319130045085,
+        "abs_change_pct": 0.047063319130045085
       }
     ]
   },
   "ETH-USDT-SWAP": {
-    "consecutive_count": 0,
+    "consecutive_count": 1,
     "last_alert_time": "2026-03-25T12:50:44.788679",
     "recent_candles": [
       {
@@ -162,6 +173,17 @@
         "volume": 215607115.99443,
         "change_pct": 0.4450256941106931,
         "abs_change_pct": 0.4450256941106931
+      },
+      {
+        "timestamp": 1774415400000,
+        "datetime": "2026-03-25 13:10:00",
+        "open": 2173.54,
+        "high": 2175.3,
+        "low": 2172.11,
+        "close": 2173.43,
+        "volume": 69485386.07705,
+        "change_pct": -0.005060868445031025,
+        "abs_change_pct": 0.005060868445031025
       }
     ]
   }
