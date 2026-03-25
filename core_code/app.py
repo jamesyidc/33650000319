@@ -20782,7 +20782,7 @@ def get_okx_trade_history():
         end_date = data.get('endDate', '')      # 格式: YYYYMMDD
         
         # 数据目录
-        data_dir = Path(__file__).parent / 'data' / 'okx_trading_history'
+        data_dir = Path('/home/user/webapp/data/okx_trading_history')
         
         if not data_dir.exists():
             return jsonify({
@@ -20857,7 +20857,7 @@ def get_okx_angles():
         end_date = request.args.get('endDate', '')  # 结束日期
         
         # 数据目录
-        data_dir = Path(__file__).parent / 'data' / 'okx_angle_analysis'
+        data_dir = Path('/home/user/webapp/data/okx_angle_analysis')
         
         if not data_dir.exists():
             return jsonify({
@@ -20920,7 +20920,7 @@ def manage_manual_angles():
         from datetime import datetime
         
         # 数据目录
-        data_dir = Path(__file__).parent / 'data' / 'okx_angle_analysis'
+        data_dir = Path('/home/user/webapp/data/okx_angle_analysis')
         if not data_dir.exists():
             data_dir.mkdir(parents=True, exist_ok=True)
         
