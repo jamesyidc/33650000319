@@ -155,7 +155,19 @@ def send_telegram_alert(symbol, config_name, consecutive_count, records):
             time_str = record['time']
             change = record['change_percent'] * 100
             price = record['price']
-            message += f"\n• {time_str}: {change:+.3f}% (${price:,.2f})"
+            
+            # 判断K线颜色：涨为红色，跌为绿色
+            if change > 0:
+                color_emoji = "🟥"  # 红色方块 - 上涨
+                color_text = "红色"
+            elif change < 0:
+                color_emoji = "🟩"  # 绿色方块 - 下跌
+                color_text = "绿色"
+            else:
+                color_emoji = "⬜"  # 白色方块 - 平盘
+                color_text = "平盘"
+            
+            message += f"\n• {time_str}: {change:+.3f}% {color_emoji} ({color_text}) - ${price:,.2f}"
         
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
