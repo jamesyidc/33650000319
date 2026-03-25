@@ -5366,11 +5366,21 @@ pm2 status                                                # 查看所有进程�
                     <i class="fas fa-chart-line text-purple-600 mr-2"></i>
                     横盘监控 - 5分钟涨跌≤0.05%
                 </h2>
-                <button onclick="refreshConsolidationData()" 
-                        class="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm">
-                    <i class="fas fa-sync-alt"></i> 刷新
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="refreshConsolidationData()" 
+                            class="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                    <button onclick="toggleConsolidationPanel()" 
+                            class="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors text-sm">
+                        <i id="consolidationToggleIcon" class="fas fa-chevron-up transition-transform duration-300"></i>
+                        <span id="consolidationToggleText">收起</span>
+                    </button>
+                </div>
             </div>
+            
+            <!-- 可伸缩内容区域 -->
+            <div id="consolidationPanelContent" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease-in-out;">
             
             <div class="grid grid-cols-2 gap-4">
                 <!-- BTC 横盘监控 -->
@@ -5438,6 +5448,78 @@ pm2 status                                                # 查看所有进程�
                     示例：9:50 +0.03% → 9:55 +0.04% → 10:00 -0.03% (连续3次横盘)
                 </div>
             </div>
+            
+            <!-- 今日触发记录 -->
+            <div class="mt-4 bg-white rounded-lg border-2 border-purple-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-semibold flex items-center">
+                        <i class="fas fa-bell text-yellow-300 mr-2"></i>
+                        今日触发记录（连续≥3次）
+                    </h3>
+                    <span id="todayTriggersCount" class="bg-white text-purple-600 px-3 py-1 rounded-full text-sm font-bold">0 次</span>
+                </div>
+                <div id="todayTriggersContent" class="p-4">
+                    <div class="text-center text-gray-400 py-4">
+                        <i class="fas fa-hourglass-half text-3xl mb-2"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 历史数据查询 -->
+            <div class="mt-4 bg-white rounded-lg border-2 border-indigo-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2">
+                    <h3 class="font-semibold flex items-center">
+                        <i class="fas fa-history mr-2"></i>
+                        历史数据查询
+                    </h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-4 gap-3 mb-3">
+                        <select id="consolidationHistorySymbol" class="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+                            <option value="BTC-USDT-SWAP">BTC永续合约</option>
+                            <option value="ETH-USDT-SWAP">ETH永续合约</option>
+                        </select>
+                        <input type="date" id="consolidationHistoryDate" 
+                               class="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+                        <button onclick="loadConsolidationHistory()" 
+                                class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors">
+                            <i class="fas fa-search mr-1"></i> 查询
+                        </button>
+                        <button onclick="loadTodayConsolidation()" 
+                                class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors">
+                            <i class="fas fa-calendar-day mr-1"></i> 今日数据
+                        </button>
+                    </div>
+                    
+                    <!-- 历史数据显示区域 -->
+                    <div id="consolidationHistoryContainer" style="display: none;">
+                        <div class="bg-indigo-50 px-3 py-2 rounded mb-2">
+                            <span id="consolidationHistoryInfo" class="text-sm font-semibold text-indigo-700"></span>
+                        </div>
+                        <div class="overflow-x-auto max-h-96 overflow-y-auto border rounded">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-100 sticky top-0">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">时间</th>
+                                        <th class="px-3 py-2 text-center">涨跌幅</th>
+                                        <th class="px-3 py-2 text-right">价格</th>
+                                        <th class="px-3 py-2 text-center">横盘状态</th>
+                                        <th class="px-3 py-2 text-center">连续次数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="consolidationHistoryTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-gray-400">暂无数据</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            </div> <!-- End of consolidationPanelContent -->
         </div>
 
         <!-- 图表区域 - 趋势图独占一行，放大2倍 -->
@@ -17049,10 +17131,235 @@ pm2 status                                                # 查看所有进程�
             icon.classList.add('fa-spin');
             
             await loadConsolidationData();
+            await loadTodayTriggers(); // 同时刷新今日触发记录
             
             setTimeout(() => {
                 icon.classList.remove('fa-spin');
             }, 500);
+        }
+        
+        // 切换横盘监控面板的显示/隐藏
+        function toggleConsolidationPanel() {
+            const content = document.getElementById('consolidationPanelContent');
+            const icon = document.getElementById('consolidationToggleIcon');
+            const text = document.getElementById('consolidationToggleText');
+            
+            if (content.style.maxHeight === '0px') {
+                // 展开
+                content.style.maxHeight = '2000px';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                text.textContent = '收起';
+                localStorage.setItem('consolidationPanelCollapsed', 'false');
+            } else {
+                // 收起
+                content.style.maxHeight = '0px';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                text.textContent = '展开';
+                localStorage.setItem('consolidationPanelCollapsed', 'true');
+            }
+        }
+        
+        // 加载今日触发记录（连续≥3次）
+        async function loadTodayTriggers() {
+            try {
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+                
+                // 获取 BTC 和 ETH 的今日数据
+                const btcResponse = await fetch(`/api/consolidation-monitor/history?symbol=BTC-USDT-SWAP&date=${dateStr}`);
+                const ethResponse = await fetch(`/api/consolidation-monitor/history?symbol=ETH-USDT-SWAP&date=${dateStr}`);
+                
+                const btcData = await btcResponse.json();
+                const ethData = await ethResponse.json();
+                
+                let triggers = [];
+                
+                // 处理 BTC 数据
+                if (btcData.success && btcData.records) {
+                    btcData.records.forEach(record => {
+                        if (record.consecutive_count >= 3) {
+                            triggers.push({
+                                ...record,
+                                coin: 'BTC',
+                                icon: 'fa-bitcoin',
+                                color: 'orange'
+                            });
+                        }
+                    });
+                }
+                
+                // 处理 ETH 数据
+                if (ethData.success && ethData.records) {
+                    ethData.records.forEach(record => {
+                        if (record.consecutive_count >= 3) {
+                            triggers.push({
+                                ...record,
+                                coin: 'ETH',
+                                icon: 'fa-ethereum',
+                                color: 'purple'
+                            });
+                        }
+                    });
+                }
+                
+                // 按时间排序（最新在前）
+                triggers.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // 更新显示
+                const countEl = document.getElementById('todayTriggersCount');
+                const contentEl = document.getElementById('todayTriggersContent');
+                
+                countEl.textContent = `${triggers.length} 次`;
+                
+                if (triggers.length === 0) {
+                    contentEl.innerHTML = `
+                        <div class="text-center text-gray-400 py-4">
+                            <i class="fas fa-check-circle text-3xl mb-2"></i>
+                            <p>今日暂无触发记录</p>
+                        </div>
+                    `;
+                } else {
+                    let html = '<div class="space-y-2">';
+                    triggers.forEach(trigger => {
+                        html += `
+                            <div class="flex items-center justify-between p-3 bg-gradient-to-r from-${trigger.color}-50 to-white rounded-lg border border-${trigger.color}-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-center gap-3">
+                                    <i class="fab ${trigger.icon} text-${trigger.color}-500 text-2xl"></i>
+                                    <div>
+                                        <div class="font-semibold text-gray-800">${trigger.coin} - ${trigger.datetime}</div>
+                                        <div class="text-sm text-gray-600">
+                                            涨跌: <span class="${parseFloat(trigger.change_percent) >= 0 ? 'text-red-600' : 'text-green-600'}">${trigger.change_percent_display}</span>
+                                            | 价格: $${trigger.price.toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-${trigger.color}-600">${trigger.consecutive_count}</div>
+                                    <div class="text-xs text-gray-500">连续次数</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    contentEl.innerHTML = html;
+                }
+                
+            } catch (error) {
+                console.error('加载今日触发记录失败:', error);
+                document.getElementById('todayTriggersContent').innerHTML = `
+                    <div class="text-center text-red-400 py-4">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+                        <p>加载失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 加载横盘监控历史数据
+        async function loadConsolidationHistory() {
+            const symbol = document.getElementById('consolidationHistorySymbol').value;
+            const dateInput = document.getElementById('consolidationHistoryDate').value;
+            
+            if (!dateInput) {
+                alert('请选择日期');
+                return;
+            }
+            
+            // 转换日期格式 YYYY-MM-DD -> YYYYMMDD
+            const date = dateInput.replace(/-/g, '');
+            
+            try {
+                const response = await fetch(`/api/consolidation-monitor/history?symbol=${symbol}&date=${date}`);
+                const data = await response.json();
+                
+                if (data.success && data.records && data.records.length > 0) {
+                    displayConsolidationHistory(data);
+                } else {
+                    document.getElementById('consolidationHistoryInfo').textContent = 
+                        `未找到 ${dateInput} 的数据`;
+                    document.getElementById('consolidationHistoryTable').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-gray-400">
+                                暂无数据
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('consolidationHistoryContainer').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载历史数据失败:', error);
+                alert('加载失败: ' + error.message);
+            }
+        }
+        
+        // 显示横盘监控历史数据
+        function displayConsolidationHistory(data) {
+            const container = document.getElementById('consolidationHistoryContainer');
+            const info = document.getElementById('consolidationHistoryInfo');
+            const table = document.getElementById('consolidationHistoryTable');
+            
+            // 显示容器
+            container.style.display = 'block';
+            
+            // 更新信息
+            const coinName = data.symbol.includes('BTC') ? 'BTC' : 'ETH';
+            const formattedDate = `${data.date.substring(0,4)}-${data.date.substring(4,6)}-${data.date.substring(6,8)}`;
+            
+            // 统计触发次数（连续≥3）
+            const triggerCount = data.records.filter(r => r.consecutive_count >= 3).length;
+            
+            info.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${coinName} - ${formattedDate} - 共 ${data.count} 条记录</span>
+                    <span class="text-red-600 font-bold">触发告警: ${triggerCount} 次</span>
+                </div>
+            `;
+            
+            // 生成表格行（最新的在前）
+            let html = '';
+            data.records.reverse().forEach(record => {
+                const price = record.price ? record.price.toLocaleString() : 'N/A';
+                const isConsolidation = record.is_consolidation;
+                const isTrigger = record.consecutive_count >= 3;
+                
+                const rowClass = isTrigger ? 'bg-red-50 border-l-4 border-l-red-500' : '';
+                const changeClass = parseFloat(record.change_percent) >= 0 ? 'text-red-600' : 'text-green-600';
+                const statusClass = isConsolidation ? 'text-yellow-600' : 'text-blue-600';
+                const statusIcon = isConsolidation ? '📊' : '📈';
+                const statusText = isConsolidation ? '横盘' : '波动';
+                const consecutiveClass = record.consecutive_count >= 3 ? 'text-red-600 font-bold text-lg' : 
+                                        record.consecutive_count >= 2 ? 'text-orange-600 font-semibold' :
+                                        record.consecutive_count >= 1 ? 'text-yellow-600' : 'text-gray-400';
+                
+                html += `
+                    <tr class="border-b hover:bg-gray-50 ${rowClass}">
+                        <td class="px-3 py-2 font-mono text-sm">${record.datetime}</td>
+                        <td class="px-3 py-2 text-center font-mono font-semibold ${changeClass}">${record.change_percent_display}</td>
+                        <td class="px-3 py-2 text-right font-mono">$${price}</td>
+                        <td class="px-3 py-2 text-center ${statusClass}">${statusIcon} ${statusText}</td>
+                        <td class="px-3 py-2 text-center ${consecutiveClass}">${record.consecutive_count}</td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = html;
+        }
+        
+        // 加载今日横盘数据
+        function loadTodayConsolidation() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('consolidationHistoryDate').value = dateStr;
+            loadConsolidationHistory();
+        }
+        
+        // 初始化横盘监控日期选择器为今天
+        function initConsolidationDatePicker() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('consolidationHistoryDate').value = dateStr;
         }
         
         // 保存阈值设置（双阈值）
@@ -17260,6 +17567,30 @@ pm2 status                                                # 查看所有进程�
             // 每 60 秒刷新一次横盘监控数据
             loadConsolidationData();
             setInterval(loadConsolidationData, 60000);
+            
+            // 初始化横盘监控日期选择器
+            initConsolidationDatePicker();
+            
+            // 加载今日触发记录
+            loadTodayTriggers();
+            setInterval(loadTodayTriggers, 60000); // 每60秒刷新一次
+            
+            // 恢复横盘监控面板状态（默认展开）
+            const consolidationCollapsed = localStorage.getItem('consolidationPanelCollapsed') === 'true';
+            const consolidationContent = document.getElementById('consolidationPanelContent');
+            const consolidationIcon = document.getElementById('consolidationToggleIcon');
+            const consolidationText = document.getElementById('consolidationToggleText');
+            if (consolidationCollapsed) {
+                consolidationContent.style.maxHeight = '0px';
+                consolidationIcon.classList.remove('fa-chevron-up');
+                consolidationIcon.classList.add('fa-chevron-down');
+                consolidationText.textContent = '展开';
+            } else {
+                consolidationContent.style.maxHeight = '2000px';
+                consolidationIcon.classList.remove('fa-chevron-down');
+                consolidationIcon.classList.add('fa-chevron-up');
+                consolidationText.textContent = '收起';
+            }
         });
         
         // 🔥 新增：加载2小时内看多/看空增加统计
