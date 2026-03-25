@@ -253,5 +253,22 @@
       "date": "20260325",
       "positive_duration": 390.0
     }
+  },
+  {
+    "time": "2026-03-26 00:06:41",
+    "type": "turn_bearish",
+    "from_ratio": 50.0,
+    "to_ratio": 40.0,
+    "from_status": "bullish",
+    "to_status": "bearish",
+    "threshold": 46.67,
+    "max_ratio": 66.67,
+    "data": {
+      "ratio": 40.0,
+      "positive_count": 2,
+      "total_count": 5,
+      "date": "20260326",
+      "positive_duration": 2.5
+    }
   }
 ]

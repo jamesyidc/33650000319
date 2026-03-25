@@ -1,0 +1,5 @@
+{"timestamp": 1774454400560, "beijing_time": "2026-03-26 00:00:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774454700151, "beijing_time": "2026-03-26 00:05:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774455000153, "beijing_time": "2026-03-26 00:10:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774455300157, "beijing_time": "2026-03-26 00:15:00", "bullish_count": 0, "bearish_count": 0, "bullish_symbols": [], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}
+{"timestamp": 1774455600154, "beijing_time": "2026-03-26 00:20:00", "bullish_count": 1, "bearish_count": 0, "bullish_symbols": [{"current_position": "bullish", "last_update": "2026-03-26 00:17:00", "ratio": 83.3, "symbol": "TRX"}], "bearish_symbols": [], "total_monitored": 28, "_computed_by": "backend"}

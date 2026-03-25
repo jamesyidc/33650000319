@@ -254,6 +254,123 @@ def create_backup():
         
         return None
 
+def copy_to_aidrive(backup_path):
+    """将备份文件复制到 AI 云盘"""
+    print(f"\n☁️  转存备份到 AI 云盘...")
+    
+    try:
+        aidrive_dir = Path('/mnt/aidrive')
+        
+        # 检查 AI 云盘是否可用
+        if not aidrive_dir.exists():
+            print(f"⚠️  AI 云盘目录不存在: {aidrive_dir}")
+            return False
+        
+        backup_filename = Path(backup_path).name
+        aidrive_backup_path = aidrive_dir / backup_filename
+        
+        # 使用 sudo 复制文件
+        result = subprocess.run(
+            ['sudo', 'cp', '-v', str(backup_path), str(aidrive_backup_path)],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5分钟超时
+        )
+        
+        if result.returncode == 0:
+            # 验证文件是否成功复制
+            if aidrive_backup_path.exists():
+                aidrive_size = aidrive_backup_path.stat().st_size
+                original_size = Path(backup_path).stat().st_size
+                
+                if aidrive_size == original_size:
+                    print(f"✅ 备份已成功转存到 AI 云盘")
+                    print(f"   位置: {aidrive_backup_path}")
+                    print(f"   大小: {format_size(aidrive_size)}")
+                    
+                    # 清理 AI 云盘中的旧备份
+                    cleanup_old_aidrive_backups()
+                    
+                    return True
+                else:
+                    print(f"⚠️  文件大小不匹配: AI云盘 {format_size(aidrive_size)} != 原始 {format_size(original_size)}")
+                    return False
+            else:
+                print(f"⚠️  文件未找到: {aidrive_backup_path}")
+                return False
+        else:
+            print(f"❌ 复制失败: {result.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print(f"❌ 复制超时（超过5分钟）")
+        return False
+    except Exception as e:
+        print(f"❌ 转存到 AI 云盘失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def cleanup_old_aidrive_backups():
+    """清理 AI 云盘中的旧备份，只保留最近3个"""
+    print(f"\n🧹 清理 AI 云盘旧备份（保留最近{MAX_BACKUPS}个）...")
+    
+    try:
+        aidrive_dir = Path('/mnt/aidrive')
+        
+        if not aidrive_dir.exists():
+            print(f"⚠️  AI 云盘目录不存在")
+            return
+        
+        # 获取所有备份文件（使用 sudo ls）
+        result = subprocess.run(
+            ['sudo', 'find', str(aidrive_dir), '-name', 'webapp_backup_*.tar.gz', '-type', 'f'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode != 0:
+            print(f"⚠️  无法列出 AI 云盘备份文件")
+            return
+        
+        backup_files = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                file_path = Path(line.strip())
+                if file_path.exists():
+                    backup_files.append(file_path)
+        
+        # 按修改时间排序
+        backup_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        
+        if len(backup_files) <= MAX_BACKUPS:
+            print(f"✅ AI 云盘当前备份数量 {len(backup_files)} <= {MAX_BACKUPS}，无需清理")
+            return
+        
+        # 删除超出数量的旧备份
+        files_to_delete = backup_files[MAX_BACKUPS:]
+        for backup_file in files_to_delete:
+            try:
+                print(f"🗑️  删除 AI 云盘旧备份: {backup_file.name}")
+                subprocess.run(['sudo', 'rm', str(backup_file)], check=True, timeout=30)
+            except Exception as e:
+                print(f"⚠️  删除失败 {backup_file.name}: {e}")
+        
+        print(f"✅ AI 云盘清理完成，保留最近 {MAX_BACKUPS} 个备份")
+        
+        # 显示保留的备份
+        remaining_backups = backup_files[:MAX_BACKUPS]
+        print(f"\n☁️  AI 云盘当前保留的备份:")
+        for i, backup_file in enumerate(remaining_backups, 1):
+            stat = backup_file.stat()
+            size = format_size(stat.st_size)
+            mtime = datetime.fromtimestamp(stat.st_mtime)
+            print(f"  {i}. {backup_file.name} - {size} - {mtime.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+    except Exception as e:
+        print(f"❌ 清理 AI 云盘备份失败: {e}")
+
 def cleanup_old_backups():
     """清理旧备份，只保留最近3个"""
     print(f"\n🧹 清理旧备份（保留最近{MAX_BACKUPS}个）...")
@@ -369,7 +486,13 @@ if __name__ == '__main__':
         # 执行备份
         backup_path = create_backup()
         if backup_path:
+            # 自动转存到 AI 云盘
+            copy_to_aidrive(backup_path)
+            
+            # 清理旧备份
             cleanup_old_backups()
+            
+            # 显示备份列表
             list_backups()
         else:
             sys.exit(1)
