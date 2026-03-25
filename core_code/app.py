@@ -35180,6 +35180,124 @@ def sideways_monitor_history():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/consolidation-monitor/status', methods=['GET'])
+def consolidation_monitor_status():
+    """获取横盘监控最新状态"""
+    try:
+        from datetime import datetime, timezone, timedelta
+        
+        data_dir = Path('data/consolidation_monitor')
+        
+        # 获取今天的日期
+        beijing_tz = timezone(timedelta(hours=8))
+        beijing_now = datetime.now(beijing_tz)
+        date_str = beijing_now.strftime('%Y%m%d')
+        
+        result = {}
+        
+        for symbol in ['BTC-USDT-SWAP', 'ETH-USDT-SWAP']:
+            symbol_key = 'BTC' if 'BTC' in symbol else 'ETH'
+            jsonl_file = data_dir / f'consolidation_{symbol.replace("-", "_")}_{date_str}.jsonl'
+            
+            if jsonl_file.exists():
+                # 读取最近10条记录
+                records = []
+                with open(jsonl_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if line.strip():
+                            try:
+                                records.append(json.loads(line))
+                            except:
+                                continue
+                
+                if records:
+                    latest = records[-1]
+                    
+                    # 计算连续横盘次数
+                    consecutive = 0
+                    for rec in reversed(records):
+                        if rec.get('is_consolidation'):
+                            consecutive += 1
+                        else:
+                            break
+                    
+                    result[symbol_key] = {
+                        'timestamp': latest.get('timestamp'),
+                        'datetime': latest.get('datetime'),
+                        'change_percent': latest.get('change_percent'),
+                        'change_percent_display': latest.get('change_percent_display'),
+                        'price': latest.get('price'),
+                        'is_consolidation': latest.get('is_consolidation'),
+                        'consecutive_count': consecutive,
+                        'recent_records': records[-5:] if len(records) >= 5 else records
+                    }
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/consolidation-monitor/history', methods=['GET'])
+def consolidation_monitor_history():
+    """获取横盘监控历史数据"""
+    try:
+        from datetime import datetime, timezone, timedelta
+        
+        symbol = request.args.get('symbol', 'BTC-USDT-SWAP')
+        date = request.args.get('date')
+        limit = request.args.get('limit', type=int)
+        
+        # 如果没有指定日期，使用今天
+        if not date:
+            beijing_tz = timezone(timedelta(hours=8))
+            beijing_now = datetime.now(beijing_tz)
+            date = beijing_now.strftime('%Y%m%d')
+        
+        data_dir = Path('data/consolidation_monitor')
+        jsonl_file = data_dir / f'consolidation_{symbol.replace("-", "_")}_{date}.jsonl'
+        
+        if not jsonl_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {date}'
+            })
+        
+        # 读取数据
+        records = []
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        records.append(json.loads(line))
+                    except:
+                        continue
+        
+        # 如果指定了limit，返回最近的N条记录
+        if limit:
+            records = records[-limit:] if len(records) > limit else records
+        
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'date': date,
+            'count': len(records),
+            'records': records
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 

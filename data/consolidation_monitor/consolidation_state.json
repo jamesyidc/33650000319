@@ -1,0 +1,28 @@
+{
+  "BTC-USDT-SWAP": {
+    "history": [
+      {
+        "timestamp": 1774413900000,
+        "time": "12:45",
+        "change_percent": -0.0003929672989011462,
+        "price": 70716.0,
+        "is_consolidation": true
+      }
+    ],
+    "last_alert_timestamp": 0,
+    "consecutive_count": 1
+  },
+  "ETH-USDT-SWAP": {
+    "history": [
+      {
+        "timestamp": 1774413900000,
+        "time": "12:45",
+        "change_percent": -0.00039359322834443746,
+        "price": 2158.74,
+        "is_consolidation": true
+      }
+    ],
+    "last_alert_timestamp": 0,
+    "consecutive_count": 1
+  }
+}
