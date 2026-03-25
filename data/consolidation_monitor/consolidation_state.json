@@ -21,10 +21,17 @@
         "change_percent": 0.0025423644979078665,
         "price": 70940.8,
         "is_consolidation": false
+      },
+      {
+        "timestamp": 1774414800000,
+        "time": "13:00",
+        "change_percent": 0.00016915488808289718,
+        "price": 70952.9,
+        "is_consolidation": true
       }
     ],
     "last_alert_timestamp": 0,
-    "consecutive_count": 0
+    "consecutive_count": 1
   },
   "ETH-USDT-SWAP": {
     "history": [
@@ -47,6 +54,13 @@
         "time": "12:55",
         "change_percent": 0.002212645407372183,
         "price": 2165.09,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774414800000,
+        "time": "13:00",
+        "change_percent": -0.0005403932400039134,
+        "price": 2163.92,
         "is_consolidation": false
       }
     ],
