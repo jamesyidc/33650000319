@@ -2,13 +2,6 @@
   "BTC-USDT-SWAP": {
     "history": [
       {
-        "timestamp": 1774442100000,
-        "time": "20:35",
-        "change_percent": 0.00042617320295789687,
-        "price": 71362.9,
-        "is_consolidation": true
-      },
-      {
         "timestamp": 1774442400000,
         "time": "20:40",
         "change_percent": -0.0005072656698849136,
@@ -140,6 +133,13 @@
         "change_percent": -0.0019159579719934495,
         "price": 71367.7,
         "is_consolidation": false
+      },
+      {
+        "timestamp": 1774448100000,
+        "time": "22:15",
+        "change_percent": -0.0007132077956833999,
+        "price": 71316.8,
+        "is_consolidation": false
       }
     ],
     "last_alert_timestamp": 0,
@@ -147,13 +147,6 @@
   },
   "ETH-USDT-SWAP": {
     "history": [
-      {
-        "timestamp": 1774442100000,
-        "time": "20:35",
-        "change_percent": 0.0006077068274942055,
-        "price": 2173.42,
-        "is_consolidation": false
-      },
       {
         "timestamp": 1774442400000,
         "time": "20:40",
@@ -285,6 +278,13 @@
         "time": "22:10",
         "change_percent": -0.0013204770223243646,
         "price": 2178.15,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774448100000,
+        "time": "22:15",
+        "change_percent": -0.0005646994008677172,
+        "price": 2176.92,
         "is_consolidation": false
       }
     ],
