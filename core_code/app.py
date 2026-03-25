@@ -34680,6 +34680,134 @@ def backup_manager():
     return render_template('backup_manager.html')
 
 
+@app.route('/api/backup/list', methods=['GET'])
+def backup_list():
+    """获取备份文件列表"""
+    try:
+        from pathlib import Path
+        import os
+        from datetime import datetime
+        
+        # 备份目录（按优先级）
+        backup_dirs = [
+            Path('/home/user/aidrive'),  # GenSpark AI 云盘
+            Path('/tmp'),                 # 本地备份
+            Path('/mnt/aidrive'),         # 备用存储
+        ]
+        
+        all_backups = []
+        
+        for backup_dir in backup_dirs:
+            if not backup_dir.exists():
+                continue
+            
+            # 查找所有备份文件
+            try:
+                if backup_dir == Path('/mnt/aidrive'):
+                    # 使用 sudo 列出文件
+                    import subprocess
+                    result = subprocess.run(
+                        ['sudo', 'find', str(backup_dir), '-name', 'webapp_backup_*.tar.gz', '-type', 'f'],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    if result.returncode == 0:
+                        for line in result.stdout.strip().split('\n'):
+                            if line:
+                                file_path = Path(line.strip())
+                                if file_path.exists():
+                                    stat = file_path.stat()
+                                    all_backups.append({
+                                        'filename': file_path.name,
+                                        'path': str(file_path),
+                                        'size': stat.st_size,
+                                        'size_mb': round(stat.st_size / 1024 / 1024, 2),
+                                        'mtime': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                                        'location': str(backup_dir),
+                                        'downloadable': backup_dir != Path('/mnt/aidrive')  # /mnt/aidrive 不提供下载
+                                    })
+                else:
+                    backup_files = list(backup_dir.glob('webapp_backup_*.tar.gz'))
+                    for file_path in backup_files:
+                        stat = file_path.stat()
+                        all_backups.append({
+                            'filename': file_path.name,
+                            'path': str(file_path),
+                            'size': stat.st_size,
+                            'size_mb': round(stat.st_size / 1024 / 1024, 2),
+                            'mtime': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                            'location': str(backup_dir),
+                            'downloadable': True
+                        })
+            except Exception as e:
+                print(f"Error listing backups in {backup_dir}: {e}")
+                continue
+        
+        # 按时间排序（最新的在前）
+        all_backups.sort(key=lambda x: x['mtime'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'count': len(all_backups),
+            'backups': all_backups
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/backup/download/<filename>', methods=['GET'])
+def backup_download(filename):
+    """下载备份文件"""
+    try:
+        from pathlib import Path
+        import os
+        
+        # 安全检查：只允许下载 webapp_backup_ 开头的 .tar.gz 文件
+        if not filename.startswith('webapp_backup_') or not filename.endswith('.tar.gz'):
+            return jsonify({
+                'success': False,
+                'error': '无效的文件名'
+            }), 400
+        
+        # 查找文件位置（按优先级）
+        search_dirs = [
+            Path('/home/user/aidrive'),  # GenSpark AI 云盘
+            Path('/tmp'),                 # 本地备份
+        ]
+        
+        file_path = None
+        for search_dir in search_dirs:
+            candidate = search_dir / filename
+            if candidate.exists() and candidate.is_file():
+                file_path = candidate
+                break
+        
+        if not file_path:
+            return jsonify({
+                'success': False,
+                'error': '文件不存在'
+            }), 404
+        
+        # 发送文件
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/gzip'
+        )
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 # ========== BTC & ETH 成交量监控 API ==========
 
 @app.route('/api/volume-monitor/status', methods=['GET'])

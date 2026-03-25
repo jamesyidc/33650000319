@@ -467,11 +467,14 @@ python3 auto_backup_system.py</pre>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     状态
                                 </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="backupList">
                             <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin mr-2"></i>
                                     加载中...
                                 </td>
@@ -613,7 +616,7 @@ python3 auto_backup_system.py</pre>
             if (!backups || backups.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                             暂无备份文件
                         </td>
                     </tr>
@@ -622,6 +625,7 @@ python3 auto_backup_system.py</pre>
             }
 
             tbody.innerHTML = backups.map((backup, index) => {
+                const downloadUrl = `/api/backup/download/${backup.filename}`;
                 return `
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -642,6 +646,14 @@ python3 auto_backup_system.py</pre>
                                 <i class="fas fa-check-circle mr-1"></i>
                                 完成
                             </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="${downloadUrl}" 
+                               class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150 ease-in-out"
+                               title="下载备份文件">
+                                <i class="fas fa-download mr-1.5"></i>
+                                下载
+                            </a>
                         </td>
                     </tr>
                 `;

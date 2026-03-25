@@ -256,12 +256,20 @@ def create_backup():
 
 def copy_to_aidrive(backup_path):
     """将备份文件复制到 AI 云盘"""
-    print(f"\n☁️  转存备份到 AI 云盘...")
+    print(f"\n☁️  转存备份到 GenSpark AI 云盘...")
     
     try:
-        aidrive_dir = Path('/mnt/aidrive')
+        # GenSpark AI 云盘路径（用户可访问的 Web AI 云盘）
+        aidrive_dir = Path('/home/user/aidrive')
         
-        # 检查 AI 云盘是否可用
+        # 创建目录（如果不存在）
+        aidrive_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 备用路径：沙箱本地挂载点
+        backup_aidrive_dir = Path('/mnt/aidrive')
+        
+        print(f"📍 AI 云盘目录: {aidrive_dir}")
+        
         if not aidrive_dir.exists():
             print(f"⚠️  AI 云盘目录不存在: {aidrive_dir}")
             return False
@@ -269,13 +277,24 @@ def copy_to_aidrive(backup_path):
         backup_filename = Path(backup_path).name
         aidrive_backup_path = aidrive_dir / backup_filename
         
-        # 使用 sudo 复制文件
+        # 复制文件到 GenSpark AI 云盘（不需要 sudo）
+        print(f"📋 复制文件: {backup_path} -> {aidrive_backup_path}")
         result = subprocess.run(
-            ['sudo', 'cp', '-v', str(backup_path), str(aidrive_backup_path)],
+            ['cp', '-v', str(backup_path), str(aidrive_backup_path)],
             capture_output=True,
             text=True,
             timeout=300  # 5分钟超时
         )
+        
+        # 同时复制到备用位置（如果存在）
+        if backup_aidrive_dir.exists():
+            backup_aidrive_path = backup_aidrive_dir / backup_filename
+            print(f"📋 同时备份到: {backup_aidrive_path}")
+            subprocess.run(
+                ['sudo', 'cp', '-v', str(backup_path), str(backup_aidrive_path)],
+                capture_output=True,
+                timeout=300
+            )
         
         if result.returncode == 0:
             # 验证文件是否成功复制
@@ -284,11 +303,13 @@ def copy_to_aidrive(backup_path):
                 original_size = Path(backup_path).stat().st_size
                 
                 if aidrive_size == original_size:
-                    print(f"✅ 备份已成功转存到 AI 云盘")
+                    print(f"✅ 备份已成功转存到 GenSpark AI 云盘")
                     print(f"   位置: {aidrive_backup_path}")
                     print(f"   大小: {format_size(aidrive_size)}")
+                    print(f"   提示: 文件将在您的 AI 云盘 Web 界面中显示")
+                    print(f"   访问: https://www.genspark.ai 查看您的云盘")
                     
-                    # 清理 AI 云盘中的旧备份
+                    # 清理 GenSpark AI 云盘中的旧备份
                     cleanup_old_aidrive_backups()
                     
                     return True
@@ -312,61 +333,74 @@ def copy_to_aidrive(backup_path):
         return False
 
 def cleanup_old_aidrive_backups():
-    """清理 AI 云盘中的旧备份，只保留最近3个"""
-    print(f"\n🧹 清理 AI 云盘旧备份（保留最近{MAX_BACKUPS}个）...")
+    """清理 GenSpark AI 云盘中的旧备份，只保留最近3个"""
+    print(f"\n🧹 清理 GenSpark AI 云盘旧备份（保留最近{MAX_BACKUPS}个）...")
     
     try:
-        aidrive_dir = Path('/mnt/aidrive')
+        # GenSpark AI 云盘目录
+        aidrive_dir = Path('/home/user/aidrive')
         
         if not aidrive_dir.exists():
             print(f"⚠️  AI 云盘目录不存在")
             return
         
-        # 获取所有备份文件（使用 sudo ls）
-        result = subprocess.run(
-            ['sudo', 'find', str(aidrive_dir), '-name', 'webapp_backup_*.tar.gz', '-type', 'f'],
-            capture_output=True,
-            text=True,
-            timeout=30
+        # 获取所有备份文件
+        backup_files = sorted(
+            aidrive_dir.glob('webapp_backup_*.tar.gz'),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True
         )
         
-        if result.returncode != 0:
-            print(f"⚠️  无法列出 AI 云盘备份文件")
-            return
-        
-        backup_files = []
-        for line in result.stdout.strip().split('\n'):
-            if line:
-                file_path = Path(line.strip())
-                if file_path.exists():
-                    backup_files.append(file_path)
-        
-        # 按修改时间排序
-        backup_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        # 同时清理备用位置
+        backup_aidrive_dir = Path('/mnt/aidrive')
+        if backup_aidrive_dir.exists():
+            backup_files_alt = []
+            result = subprocess.run(
+                ['sudo', 'find', str(backup_aidrive_dir), '-name', 'webapp_backup_*.tar.gz', '-type', 'f'],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    if line:
+                        file_path = Path(line.strip())
+                        if file_path.exists():
+                            backup_files_alt.append(file_path)
+                backup_files_alt.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         
         if len(backup_files) <= MAX_BACKUPS:
-            print(f"✅ AI 云盘当前备份数量 {len(backup_files)} <= {MAX_BACKUPS}，无需清理")
-            return
-        
-        # 删除超出数量的旧备份
-        files_to_delete = backup_files[MAX_BACKUPS:]
-        for backup_file in files_to_delete:
-            try:
-                print(f"🗑️  删除 AI 云盘旧备份: {backup_file.name}")
-                subprocess.run(['sudo', 'rm', str(backup_file)], check=True, timeout=30)
-            except Exception as e:
-                print(f"⚠️  删除失败 {backup_file.name}: {e}")
-        
-        print(f"✅ AI 云盘清理完成，保留最近 {MAX_BACKUPS} 个备份")
+            print(f"✅ GenSpark AI 云盘当前备份数量 {len(backup_files)} <= {MAX_BACKUPS}，无需清理")
+        else:
+            # 删除超出数量的旧备份
+            files_to_delete = backup_files[MAX_BACKUPS:]
+            for backup_file in files_to_delete:
+                try:
+                    print(f"🗑️  删除 GenSpark AI 云盘旧备份: {backup_file.name}")
+                    os.remove(backup_file)
+                except Exception as e:
+                    print(f"⚠️  删除失败 {backup_file.name}: {e}")
+            
+            print(f"✅ GenSpark AI 云盘清理完成，保留最近 {MAX_BACKUPS} 个备份")
         
         # 显示保留的备份
         remaining_backups = backup_files[:MAX_BACKUPS]
-        print(f"\n☁️  AI 云盘当前保留的备份:")
+        print(f"\n☁️  GenSpark AI 云盘当前保留的备份:")
         for i, backup_file in enumerate(remaining_backups, 1):
             stat = backup_file.stat()
             size = format_size(stat.st_size)
             mtime = datetime.fromtimestamp(stat.st_mtime)
             print(f"  {i}. {backup_file.name} - {size} - {mtime.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # 清理备用位置
+        if backup_aidrive_dir.exists() and backup_files_alt:
+            if len(backup_files_alt) > MAX_BACKUPS:
+                files_to_delete_alt = backup_files_alt[MAX_BACKUPS:]
+                for backup_file in files_to_delete_alt:
+                    try:
+                        subprocess.run(['sudo', 'rm', str(backup_file)], check=True, timeout=30)
+                    except Exception:
+                        pass
             
     except Exception as e:
         print(f"❌ 清理 AI 云盘备份失败: {e}")
