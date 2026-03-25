@@ -2,41 +2,6 @@
   "BTC-USDT-SWAP": {
     "history": [
       {
-        "timestamp": 1774452300000,
-        "time": "23:25",
-        "change_percent": 0.001279281007402017,
-        "price": 70989.9,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774452600000,
-        "time": "23:30",
-        "change_percent": -0.0007536283330445599,
-        "price": 70936.4,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774452900000,
-        "time": "23:35",
-        "change_percent": -0.001450593136114612,
-        "price": 70833.6,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774453200000,
-        "time": "23:40",
-        "change_percent": 0.0002950581292749078,
-        "price": 70854.4,
-        "is_consolidation": true
-      },
-      {
-        "timestamp": 1774453500000,
-        "time": "23:45",
-        "change_percent": 1.6936139463627406e-05,
-        "price": 70855.6,
-        "is_consolidation": true
-      },
-      {
         "timestamp": 1774453800000,
         "time": "23:50",
         "change_percent": -3.528297652835269e-05,
@@ -140,6 +105,41 @@
         "change_percent": -0.0002609061579464977,
         "price": 71271.4,
         "is_consolidation": true
+      },
+      {
+        "timestamp": 1774458300000,
+        "time": "01:05",
+        "change_percent": -0.0016037310951252876,
+        "price": 71157.0,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774458600000,
+        "time": "01:10",
+        "change_percent": -0.0005565150912559087,
+        "price": 71117.5,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774458900000,
+        "time": "01:15",
+        "change_percent": -0.0017084402573206313,
+        "price": 70996.0,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774459200000,
+        "time": "01:20",
+        "change_percent": 0.0007521539915572007,
+        "price": 71049.5,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774459500000,
+        "time": "01:25",
+        "change_percent": -0.0001886009050027682,
+        "price": 71036.1,
+        "is_consolidation": true
       }
     ],
     "last_alert_timestamp": 0,
@@ -147,41 +147,6 @@
   },
   "ETH-USDT-SWAP": {
     "history": [
-      {
-        "timestamp": 1774452300000,
-        "time": "23:25",
-        "change_percent": 0.0010680253551993164,
-        "price": 2165.18,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774452600000,
-        "time": "23:30",
-        "change_percent": -0.00141328394537147,
-        "price": 2162.11,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774452900000,
-        "time": "23:35",
-        "change_percent": -0.0018407944091651295,
-        "price": 2158.13,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774453200000,
-        "time": "23:40",
-        "change_percent": 0.0015800789576113977,
-        "price": 2161.53,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774453500000,
-        "time": "23:45",
-        "change_percent": 0.0005597860784440892,
-        "price": 2162.75,
-        "is_consolidation": false
-      },
       {
         "timestamp": 1774453800000,
         "time": "23:50",
@@ -285,6 +250,41 @@
         "time": "01:00",
         "change_percent": -0.0002807114424427083,
         "price": 2172.44,
+        "is_consolidation": true
+      },
+      {
+        "timestamp": 1774458300000,
+        "time": "01:05",
+        "change_percent": -0.0014868143047186875,
+        "price": 2169.2,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774458600000,
+        "time": "01:10",
+        "change_percent": 0.00029964964042047346,
+        "price": 2169.85,
+        "is_consolidation": true
+      },
+      {
+        "timestamp": 1774458900000,
+        "time": "01:15",
+        "change_percent": -0.001580761715149638,
+        "price": 2166.41,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774459200000,
+        "time": "01:20",
+        "change_percent": 0.0007893206303487026,
+        "price": 2168.13,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774459500000,
+        "time": "01:25",
+        "change_percent": -0.0002029389246082147,
+        "price": 2167.7,
         "is_consolidation": true
       }
     ],
