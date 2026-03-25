@@ -6,13 +6,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 20.041804288543133,
-      "unrealized_pnl": 2.1622399999999327,
-      "pnl_pct": 10.79,
-      "position_count": 1,
+      "total_cost": 0,
+      "unrealized_pnl": 0,
+      "pnl_pct": 0,
+      "position_count": 0,
       "account_name": "主账户",
       "okx_account": "account_main",
-      "color": "green"
+      "color": "none"
     },
     "B": {
       "positions": {
@@ -20,13 +20,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 22.78308130075598,
-      "unrealized_pnl": 3.615969310344801,
-      "pnl_pct": 15.87,
-      "position_count": 1,
+      "total_cost": 0,
+      "unrealized_pnl": 0,
+      "pnl_pct": 0,
+      "position_count": 0,
       "account_name": "POIT",
       "okx_account": "account_poit_main",
-      "color": "green"
+      "color": "none"
     },
     "C": {
       "positions": {
@@ -34,13 +34,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 20.044681088543136,
-      "unrealized_pnl": 2.009119999999966,
-      "pnl_pct": 10.02,
-      "position_count": 1,
+      "total_cost": 0,
+      "unrealized_pnl": 0,
+      "pnl_pct": 0,
+      "position_count": 0,
       "account_name": "fangfang12",
       "okx_account": "account_fangfang12",
-      "color": "green"
+      "color": "none"
     },
     "D": {
       "positions": {
@@ -48,13 +48,13 @@
         "B": null,
         "C": null
       },
-      "total_cost": 20.039298688543134,
-      "unrealized_pnl": 2.2735999999998313,
-      "pnl_pct": 11.35,
-      "position_count": 1,
+      "total_cost": 0,
+      "unrealized_pnl": 0,
+      "pnl_pct": 0,
+      "position_count": 0,
       "account_name": "dadanini",
       "okx_account": "account_dadanini",
-      "color": "green"
+      "color": "none"
     }
   },
   "trading_permission": {
@@ -63,6 +63,6 @@
     "last_update": null
   },
   "current_direction": "none",
-  "last_update": "2026-03-26T00:22:45.850317+08:00",
+  "last_update": "2026-03-26T01:06:45.568168+08:00",
   "trigger_history": []
 }

@@ -2,69 +2,6 @@
   "BTC-USDT-SWAP": {
     "history": [
       {
-        "timestamp": 1774449600000,
-        "time": "22:40",
-        "change_percent": 0.00020051657556954995,
-        "price": 71330.1,
-        "is_consolidation": true
-      },
-      {
-        "timestamp": 1774449900000,
-        "time": "22:45",
-        "change_percent": 0.0006154484572430738,
-        "price": 71374.0,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774450200000,
-        "time": "22:50",
-        "change_percent": -0.0008826743632134952,
-        "price": 71311.0,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774450500000,
-        "time": "22:55",
-        "change_percent": -0.001419135897687553,
-        "price": 71209.8,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774450800000,
-        "time": "23:00",
-        "change_percent": 0.00034124564490515917,
-        "price": 71234.0,
-        "is_consolidation": true
-      },
-      {
-        "timestamp": 1774451100000,
-        "time": "23:05",
-        "change_percent": -0.004719649718323269,
-        "price": 70897.9,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774451400000,
-        "time": "23:10",
-        "change_percent": -0.0013794504201823316,
-        "price": 70800.0,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774451700000,
-        "time": "23:15",
-        "change_percent": -0.001905369922838792,
-        "price": 70665.0,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774452000000,
-        "time": "23:20",
-        "change_percent": 0.0033156442368924206,
-        "price": 70899.3,
-        "is_consolidation": false
-      },
-      {
         "timestamp": 1774452300000,
         "time": "23:25",
         "change_percent": 0.001279281007402017,
@@ -140,76 +77,76 @@
         "change_percent": 0.0008257883102253768,
         "price": 70899.9,
         "is_consolidation": false
+      },
+      {
+        "timestamp": 1774455600000,
+        "time": "00:20",
+        "change_percent": 0.002090267983074712,
+        "price": 71048.2,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774455900000,
+        "time": "00:25",
+        "change_percent": 0.0059086731383385105,
+        "price": 71467.9,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774456200000,
+        "time": "00:30",
+        "change_percent": -0.0011613589298707114,
+        "price": 71385.0,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774456500000,
+        "time": "00:35",
+        "change_percent": 0.002888562022833888,
+        "price": 71591.2,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774456800000,
+        "time": "00:40",
+        "change_percent": -0.0022502797135398925,
+        "price": 71430.0,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774457100000,
+        "time": "00:45",
+        "change_percent": -0.0019599608007839844,
+        "price": 71290.0,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774457400000,
+        "time": "00:50",
+        "change_percent": 0.0010071524657699787,
+        "price": 71361.9,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774457700000,
+        "time": "00:55",
+        "change_percent": -0.001007541850121616,
+        "price": 71289.9,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774458000000,
+        "time": "01:00",
+        "change_percent": -0.0002609061579464977,
+        "price": 71271.4,
+        "is_consolidation": true
       }
     ],
     "last_alert_timestamp": 0,
-    "consecutive_count": 0
+    "consecutive_count": 1
   },
   "ETH-USDT-SWAP": {
     "history": [
-      {
-        "timestamp": 1774449600000,
-        "time": "22:40",
-        "change_percent": -0.0003764230627984593,
-        "price": 2177.58,
-        "is_consolidation": true
-      },
-      {
-        "timestamp": 1774449900000,
-        "time": "22:45",
-        "change_percent": 0.00039493382562299774,
-        "price": 2178.44,
-        "is_consolidation": true
-      },
-      {
-        "timestamp": 1774450200000,
-        "time": "22:50",
-        "change_percent": -0.001312872114320714,
-        "price": 2175.57,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774450500000,
-        "time": "22:55",
-        "change_percent": -0.0010388129952746711,
-        "price": 2173.3,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774450800000,
-        "time": "23:00",
-        "change_percent": 0.0002898804128265683,
-        "price": 2173.94,
-        "is_consolidation": true
-      },
-      {
-        "timestamp": 1774451100000,
-        "time": "23:05",
-        "change_percent": -0.005492306630787093,
-        "price": 2162.01,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774451400000,
-        "time": "23:10",
-        "change_percent": -0.0008279332658037744,
-        "price": 2160.22,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774451700000,
-        "time": "23:15",
-        "change_percent": -0.0038190554665728494,
-        "price": 2151.97,
-        "is_consolidation": false
-      },
-      {
-        "timestamp": 1774452000000,
-        "time": "23:20",
-        "change_percent": 0.005065126372579586,
-        "price": 2162.87,
-        "is_consolidation": false
-      },
       {
         "timestamp": 1774452300000,
         "time": "23:25",
@@ -286,9 +223,72 @@
         "change_percent": 0.0010003566086057782,
         "price": 2161.39,
         "is_consolidation": false
+      },
+      {
+        "timestamp": 1774455600000,
+        "time": "00:20",
+        "change_percent": 0.0024058703235894743,
+        "price": 2166.58,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774455900000,
+        "time": "00:25",
+        "change_percent": 0.00396938954481252,
+        "price": 2175.18,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774456200000,
+        "time": "00:30",
+        "change_percent": 0.0004551368398790815,
+        "price": 2176.16,
+        "is_consolidation": true
+      },
+      {
+        "timestamp": 1774456500000,
+        "time": "00:35",
+        "change_percent": 0.002329791927064262,
+        "price": 2181.23,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774456800000,
+        "time": "00:40",
+        "change_percent": -0.0019438484531733244,
+        "price": 2177.0,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774457100000,
+        "time": "00:45",
+        "change_percent": -0.0016812049554206499,
+        "price": 2173.35,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774457400000,
+        "time": "00:50",
+        "change_percent": 0.0009616490671084481,
+        "price": 2175.44,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774457700000,
+        "time": "00:55",
+        "change_percent": -0.0010940315522377584,
+        "price": 2173.06,
+        "is_consolidation": false
+      },
+      {
+        "timestamp": 1774458000000,
+        "time": "01:00",
+        "change_percent": -0.0002807114424427083,
+        "price": 2172.44,
+        "is_consolidation": true
       }
     ],
     "last_alert_timestamp": 0,
-    "consecutive_count": 0
+    "consecutive_count": 1
   }
 }
